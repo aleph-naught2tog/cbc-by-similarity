@@ -1,8 +1,8 @@
 import csv
 import json
 import numpy as np
-import numpy.typing as npt
 from scipy.spatial.distance import cosine
+from typing import Any, Literal
 
 from BirdData import BirdData
 
@@ -26,20 +26,21 @@ def to_float_with_default(val: float | None) -> float:
 
 
 def calculate_cosine_similarities(
-    bird_data: BirdData, comparison_bird_name: str
+    bird_data: BirdData,
+    comparison_bird_name: str,
+    how: Literal["howMany"] | Literal["numberByPartyHours"],
 ):
     bird_list = [
         to_float_with_default(count)
-        for (_year, count) in bird_data.get_party_hours_by_bird(
-            comparison_bird_name
-        )
+        for (_year, count) in bird_data.get_by_bird(comparison_bird_name, how)
     ]
+
     bird_np = np.array(bird_list)
 
     cosine_similarities: list[tuple[str, float]] = []
 
     for bird_name in bird_data.bird_names:
-        counts = bird_data.get_party_hours_by_bird(bird_name)
+        counts = bird_data.get_by_bird(bird_name, how)
 
         count_list = [to_float_with_default(count) for (_year, count) in counts]
         np_counts = np.array(count_list)
@@ -47,6 +48,12 @@ def calculate_cosine_similarities(
         cosine_similarities.append((bird_name, 1 - cosine(bird_np, np_counts)))
 
     return cosine_similarities
+
+
+def write_to_tsv(csv_lines: list[list[Any]], output_filename: str):
+    with open(output_filename, "w", newline="") as tsv:
+        writer = csv.writer(tsv, delimiter="\t", quoting=csv.QUOTE_STRINGS)
+        writer.writerows(csv_lines)
 
 
 def main():
@@ -60,7 +67,7 @@ def main():
 
     for compared_bird_name in bird_data.bird_names:
         cos_similarities = calculate_cosine_similarities(
-            bird_data, compared_bird_name
+            bird_data, compared_bird_name, how="numberByPartyHours"
         )
 
         cs_vals: list[float] = list(list(zip(*cos_similarities))[1])
@@ -70,9 +77,7 @@ def main():
 
         csv_lines.append(row)
 
-    with open(output_filename, "w", newline="") as tsv:
-        writer = csv.writer(tsv, delimiter="\t", quoting=csv.QUOTE_STRINGS)
-        writer.writerows(csv_lines)
+    write_to_tsv(csv_lines=csv_lines, output_filename=output_filename)
 
 
 if __name__ == "__main__":

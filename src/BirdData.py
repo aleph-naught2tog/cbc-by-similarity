@@ -1,3 +1,4 @@
+from typing import Literal
 from app_types import BirdJSON, RawCountDatum
 
 
@@ -8,46 +9,33 @@ class BirdData:
         self.bird_names = list(self.__raw_json__)
         self.years = self.__min_max_years__()
 
-    def get_by_bird(self, bird_name: str) -> dict[str, RawCountDatum]:
+    def get_data_by_bird(self, bird_name: str) -> dict[str, RawCountDatum]:
         if bird_name in self.bird_names:
             return self.__raw_json__[bird_name]
         else:
             raise Exception(f"<{bird_name}> not found in data")
 
-    def get_counts_by_bird(
-        self, bird_name: str
-    ) -> list[tuple[str, float | None]]:
-        bird_data = self.get_by_bird(bird_name)
+    def get_by_bird(
+        self,
+        bird_name: str,
+        how: Literal["howMany"] | Literal["numberByPartyHours"],
+    ):
+        if how != "howMany" and how != "numberByPartyHours":
+            raise Exception('Which values must be "howMany" ')
 
-        counts = [
-            (year, datum["howMany"]) for [year, datum] in bird_data.items()
+        bird_data = self.get_data_by_bird(bird_name)
+
+        result_list = [
+            (year, datum[how]) for [year, datum] in bird_data.items()
         ]
 
-        present_years = list(zip(*counts))[0]
+        present_years = list(zip(*result_list))[0]
 
         for req_year in self.years:
             if str(req_year) not in present_years:
-                counts.append((str(req_year), None))
+                result_list.append((str(req_year), None))
 
-        return counts
-
-    def get_party_hours_by_bird(
-        self, bird_name: str
-    ) -> list[tuple[str, float | None]]:
-        bird_data = self.get_by_bird(bird_name)
-
-        party_hours = [
-            (year, datum["numberByPartyHours"])
-            for [year, datum] in bird_data.items()
-        ]
-
-        present_years = list(zip(*party_hours))[0]
-
-        for req_year in self.years:
-            if str(req_year) not in present_years:
-                party_hours.append((str(req_year), None))
-
-        return party_hours
+        return result_list
 
     def __min_max_years__(self):
         all_years = [
