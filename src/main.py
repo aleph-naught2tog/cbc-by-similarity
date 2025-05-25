@@ -1,6 +1,7 @@
 import csv
 import json
 import numpy as np
+import numpy.typing as npt
 from scipy.spatial.distance import cosine
 
 from BirdData import BirdData
@@ -50,26 +51,27 @@ def calculate_cosine_similarities(
 
 def main():
     input_filename = "data/raw/bird_map_as_json.json"
-    output_filename = "data/processed/birds_with_comparisons.sv"
+    output_filename = "data/processed/birds_with_comparisons.tsv"
 
     bird_data = translate_json_to_bird_data(input_filename)
 
     header = ["bird_name"] + bird_data.bird_names
     csv_lines = [header]
 
-    for compared_bird_name in bird_data.bird_names[0:5]:
+    for compared_bird_name in bird_data.bird_names:
         cos_similarities = calculate_cosine_similarities(
             bird_data, compared_bird_name
         )
 
-        cs_vals = list(list(zip(*cos_similarities))[1])
-        row = [compared_bird_name]
-        row.append(cs_vals)
+        cs_vals: list[float] = list(list(zip(*cos_similarities))[1])
+        cs = [float(format(val, ".5f")) for val in cs_vals]
+
+        row = [compared_bird_name] + cs
 
         csv_lines.append(row)
 
     with open(output_filename, "w", newline="") as tsv:
-        writer = csv.writer(tsv)
+        writer = csv.writer(tsv, delimiter="\t", quoting=csv.QUOTE_STRINGS)
         writer.writerows(csv_lines)
 
 
