@@ -1,10 +1,12 @@
 import csv
 import json
 import numpy as np
-from scipy.spatial.distance import cosine
-from typing import Any, Literal
+from scipy.spatial.distance import cosine, directed_hausdorff
+from typing import Any, Literal, Sequence
 
 from BirdData import BirdData
+
+np.seterr(all="warn")
 
 
 def translate_json_to_bird_data(input_filename: str) -> BirdData:
@@ -25,24 +27,57 @@ def to_float_with_default(val: float | None) -> float:
         return val
 
 
+def calculate_hausdorff_distance(
+    data: BirdData,
+    comparison_bird_name: str,
+    how: Literal["howMany"] | Literal["numberByPartyHours"],
+):
+    bird_np = np.array(
+        [
+            (int(year), to_float_with_default(count))
+            for (year, count) in data.get_by_bird(comparison_bird_name, how)
+        ]
+    )
+
+    hausdorff_distances: list[tuple[str, float]] = []
+
+    for bird_name in data.bird_names:
+        counts = data.get_by_bird(bird_name, how)
+        count_list = [
+            (int(year), to_float_with_default(count))
+            for (year, count) in counts
+        ]
+
+        np_counts = np.array(count_list)
+
+        hausdorff_distances.append(
+            (bird_name, directed_hausdorff(bird_np, np_counts)[0])
+        )
+
+    return hausdorff_distances
+
+
 def calculate_cosine_similarities(
-    bird_data: BirdData,
+    data: BirdData,
     comparison_bird_name: str,
     how: Literal["howMany"] | Literal["numberByPartyHours"],
 ):
     bird_list = [
         to_float_with_default(count)
-        for (_year, count) in bird_data.get_by_bird(comparison_bird_name, how)
+        for (_year, count) in data.get_by_bird(comparison_bird_name, how)
     ]
 
     bird_np = np.array(bird_list)
 
     cosine_similarities: list[tuple[str, float]] = []
 
-    for bird_name in bird_data.bird_names:
-        counts = bird_data.get_by_bird(bird_name, how)
+    for bird_name in data.bird_names:
+        counts = data.get_by_bird(bird_name, how)
 
-        count_list = [to_float_with_default(count) for (_year, count) in counts]
+        # NOTE: we divide by 10 here to avoid scalar overflow
+        count_list = [
+            (to_float_with_default(count) / 100) for (_year, count) in counts
+        ]
         np_counts = np.array(count_list)
 
         cosine_similarities.append((bird_name, 1 - cosine(bird_np, np_counts)))
@@ -50,34 +85,84 @@ def calculate_cosine_similarities(
     return cosine_similarities
 
 
-def write_to_tsv(csv_lines: list[list[Any]], output_filename: str):
+def write_to_tsv(csv_lines: Sequence[Sequence[Any]], output_filename: str):
     with open(output_filename, "w", newline="") as tsv:
         writer = csv.writer(tsv, delimiter="\t", quoting=csv.QUOTE_STRINGS)
         writer.writerows(csv_lines)
 
 
-def main():
-    input_filename = "data/raw/bird_map_as_json.json"
-    output_filename = "data/processed/birds_with_comparisons.tsv"
+def get_filename(
+    how: str,
+    method: str,
+):
+    filename_base = "data/processed"
+    core_filename = "cbc-bird-comparisons"
+    ext = "tsv"
 
-    bird_data = translate_json_to_bird_data(input_filename)
+    return f"{filename_base}/{core_filename}_{how}_{method}.{ext}"
 
+
+def write_cosine_similarities_file(
+    bird_data: BirdData, how: Literal["howMany"] | Literal["numberByPartyHours"]
+):
     header = ["bird_name"] + bird_data.bird_names
-    csv_lines = [header]
+    csv_lines: list[Sequence[float | str]] = [header]
 
-    for compared_bird_name in bird_data.bird_names:
-        cos_similarities = calculate_cosine_similarities(
-            bird_data, compared_bird_name, how="numberByPartyHours"
+    for bird_name in bird_data.bird_names:
+        results = calculate_cosine_similarities(
+            data=bird_data,
+            comparison_bird_name=bird_name,
+            how=how,
         )
 
-        cs_vals: list[float] = list(list(zip(*cos_similarities))[1])
+        cs_vals: list[float] = list(list(zip(*results))[1])
         cs = [float(format(val, ".5f")) for val in cs_vals]
 
-        row = [compared_bird_name] + cs
+        row = [bird_name] + cs
 
         csv_lines.append(row)
 
+    output_filename = get_filename(how + "-over-100", method="cosine")
     write_to_tsv(csv_lines=csv_lines, output_filename=output_filename)
+
+
+def write_hausdorff_distances_file(
+    bird_data: BirdData, how: Literal["howMany"] | Literal["numberByPartyHours"]
+):
+    header = ["bird_name"] + bird_data.bird_names
+    csv_lines: list[Sequence[float | str]] = [header]
+    for bird_name in bird_data.bird_names:
+        results = calculate_hausdorff_distance(
+            data=bird_data,
+            comparison_bird_name=bird_name,
+            how=how,
+        )
+
+        cs_vals: list[float] = list(list(zip(*results))[1])
+        cs = [float(format(val, ".5f")) for val in cs_vals]
+
+        row = [bird_name] + cs
+
+        csv_lines.append(row)
+
+    output_filename = get_filename(how, method="hausdorff")
+    write_to_tsv(csv_lines=csv_lines, output_filename=output_filename)
+
+
+def main():
+    input_filename = "data/raw/bird_map_as_json.json"
+
+    bird_data = translate_json_to_bird_data(input_filename)
+
+    write_cosine_similarities_file(bird_data=bird_data, how="howMany")
+    write_cosine_similarities_file(
+        bird_data=bird_data, how="numberByPartyHours"
+    )
+
+    write_hausdorff_distances_file(bird_data=bird_data, how="howMany")
+    write_hausdorff_distances_file(
+        bird_data=bird_data, how="numberByPartyHours"
+    )
 
 
 if __name__ == "__main__":
