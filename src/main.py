@@ -4,6 +4,7 @@ from scipy.spatial.distance import directed_hausdorff, cosine
 
 from BirdData import BirdData
 
+
 def translate_json_to_bird_data(input_filename: str) -> BirdData:
     raw_json = {}
 
@@ -32,7 +33,7 @@ def calculate_counts_hausdorff(bird_data: BirdData, comparison_bird_name: str):
         ]
     )
 
-    hausdorff_distances: list[tuple[str, tuple[float, float, float]]] = []
+    hausdorff_distances: list[tuple[str, float]] = []
 
     for bird_name in bird_data.bird_names:
         counts = bird_data.get_counts_by_bird(bird_name)
@@ -44,15 +45,14 @@ def calculate_counts_hausdorff(bird_data: BirdData, comparison_bird_name: str):
         )
 
         hausdorff_distances.append(
-            (bird_name, directed_hausdorff(bird_np, np_counts))
+            (bird_name, directed_hausdorff(bird_np, np_counts)[0])
         )
 
-    sorted_by_hd = sorted(hausdorff_distances, key=lambda d: d[1])
+    sorted_by_hd = sorted(hausdorff_distances, key=lambda d: 1 - d[1])
 
     return sorted_by_hd
 
 
-# # BUG: this won't work until we normalize over the years, which just isn't working rn
 def calculate_cosine_similarities(
     bird_data: BirdData, comparison_bird_name: str
 ):
@@ -65,14 +65,12 @@ def calculate_cosine_similarities(
     cosine_similarities: list[tuple[str, float]] = []
 
     for bird_name in bird_data.bird_names:
-        print(f"{bird_name.upper()}")
         counts = bird_data.get_counts_by_bird(bird_name)
 
         count_list = [to_float_with_default(count) for (_year, count) in counts]
         np_counts = np.array(count_list)
 
         cosine_similarities.append((bird_name, 1 - cosine(bird_np, np_counts)))
-
 
     sorted_by_cos = sorted(cosine_similarities, key=lambda d: d[1])
 
@@ -83,13 +81,32 @@ def main():
     input_filename = "data/raw/bird_map_as_json.json"
 
     bird_data = translate_json_to_bird_data(input_filename)
-
-    for bird_name, (hd, _i, _j) in calculate_counts_hausdorff(
+    hd_distances = calculate_counts_hausdorff(
         bird_data, "Greater White-fronted Goose"
-    ):
-        print(f"{bird_name}: {hd}")
+    )
 
-    calculate_cosine_similarities(bird_data, "Greater White-fronted Goose")
+    # for bird_name, hd in hd_distances:
+    #     print(f"{bird_name}: {hd}")
+
+    cos_similarities = calculate_cosine_similarities(
+        bird_data, "Greater White-fronted Goose"
+    )
+
+    # print("-------------")
+    # print("-------------")
+    # print("-------------")
+
+    # for bird_name, cs in cos_similarities:
+    #     print(f"{bird_name}: {cs}")
+
+    hd_ordered_names = list(zip(*hd_distances))[0]
+    hd_vals = list(zip(*hd_distances))[1]
+    cs_ordered_names = list(zip(*cos_similarities))[0]
+    cs_vals = list(zip(*cos_similarities))[1]
+
+    for index, bird_name in enumerate(hd_ordered_names):
+        other = cs_ordered_names[index]
+        print(f"{bird_name},{other},{hd_vals[index]},{cs_vals[index]}")
 
 
 if __name__ == "__main__":

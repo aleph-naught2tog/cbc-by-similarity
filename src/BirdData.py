@@ -29,8 +29,6 @@ class BirdData:
             if str(req_year) not in present_years:
                 counts.append((str(req_year), None))
 
-        print(counts)
-
         return counts
 
     def get_party_hours_by_bird(
