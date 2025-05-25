@@ -1,6 +1,7 @@
+import csv
 import json
 import numpy as np
-from scipy.spatial.distance import directed_hausdorff, cosine
+from scipy.spatial.distance import cosine
 
 from BirdData import BirdData
 
@@ -21,36 +22,6 @@ def to_float_with_default(val: float | None) -> float:
         return -1
     else:
         return val
-
-
-def calculate_counts_hausdorff(bird_data: BirdData, comparison_bird_name: str):
-    bird_np = np.array(
-        [
-            (int(year), to_float_with_default(count))
-            for (year, count) in bird_data.get_party_hours_by_bird(
-                comparison_bird_name
-            )
-        ]
-    )
-
-    hausdorff_distances: list[tuple[str, float]] = []
-
-    for bird_name in bird_data.bird_names:
-        counts = bird_data.get_party_hours_by_bird(bird_name)
-        np_counts = np.array(
-            [
-                (int(year), to_float_with_default(count))
-                for (year, count) in counts
-            ]
-        )
-
-        hausdorff_distances.append(
-            (bird_name, directed_hausdorff(bird_np, np_counts)[0])
-        )
-
-    sorted_by_hd = sorted(hausdorff_distances, key=lambda d: 1 - d[1])
-
-    return sorted_by_hd
 
 
 def calculate_cosine_similarities(
@@ -74,31 +45,32 @@ def calculate_cosine_similarities(
 
         cosine_similarities.append((bird_name, 1 - cosine(bird_np, np_counts)))
 
-    sorted_by_cos = sorted(cosine_similarities, key=lambda d: d[1])
-
-    return sorted_by_cos
+    return cosine_similarities
 
 
 def main():
     input_filename = "data/raw/bird_map_as_json.json"
-    bird_name = "Northern Cardinal"
+    output_filename = "data/processed/birds_with_comparisons.sv"
 
     bird_data = translate_json_to_bird_data(input_filename)
-    hd_distances = calculate_counts_hausdorff(bird_data, bird_name)
 
-    # for bird_name, hd in hd_distances:
-    #     print(f"{bird_name}: {hd}")
+    header = ["bird_name"] + bird_data.bird_names
+    csv_lines = [header]
 
-    cos_similarities = calculate_cosine_similarities(bird_data, bird_name)
+    for compared_bird_name in bird_data.bird_names[0:5]:
+        cos_similarities = calculate_cosine_similarities(
+            bird_data, compared_bird_name
+        )
 
-    hd_ordered_names = list(zip(*hd_distances))[0]
-    hd_vals = list(zip(*hd_distances))[1]
-    cs_ordered_names = list(zip(*cos_similarities))[0]
-    cs_vals = list(zip(*cos_similarities))[1]
+        cs_vals = list(list(zip(*cos_similarities))[1])
+        row = [compared_bird_name]
+        row.append(cs_vals)
 
-    for index, b_name in enumerate(hd_ordered_names):
-        other = cs_ordered_names[index]
-        print(f"{b_name},{other},{hd_vals[index]},{cs_vals[index]}")
+        csv_lines.append(row)
+
+    with open(output_filename, "w", newline="") as tsv:
+        writer = csv.writer(tsv)
+        writer.writerows(csv_lines)
 
 
 if __name__ == "__main__":
