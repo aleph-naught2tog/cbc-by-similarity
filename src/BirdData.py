@@ -1,4 +1,3 @@
-from typing import cast
 from app_types import BirdJSON, RawCountDatum
 
 
@@ -24,6 +23,14 @@ class BirdData:
             (year, datum["howMany"]) for [year, datum] in bird_data.items()
         ]
 
+        present_years = list(zip(*counts))[0]
+
+        for req_year in self.years:
+            if str(req_year) not in present_years:
+                counts.append((str(req_year), None))
+
+        print(counts)
+
         return counts
 
     def get_party_hours_by_bird(
@@ -35,6 +42,12 @@ class BirdData:
             (year, datum["numberByPartyHours"])
             for [year, datum] in bird_data.items()
         ]
+
+        present_years = list(zip(*party_hours))[0]
+
+        for req_year in self.years:
+            if str(req_year) not in present_years:
+                party_hours.append((str(req_year), None))
 
         return party_hours
 
@@ -49,27 +62,3 @@ class BirdData:
         max_year = max(all_years)
 
         return range(min_year, max_year + 1)
-
-    # this isn't working
-    # def __process_json__(self):
-    #     processed_json: BirdJSON = cast(BirdJSON, {})
-
-    #     for required_year in self.years:
-    #         print(required_year)
-    #         for bird_name, year_data in self.__raw_json__.items():
-    #             processed_year_data = year_data.copy()
-
-    #             if str(required_year) not in processed_year_data:
-    #                 print(f'{required_year} gone')
-    #                 processed_year_data.update({ str(required_year): {
-    #                         "howMany": None,
-    #                         "numberByPartyHours": None,
-    #                     } })
-    #             else:
-    #                 print(f'{required_year} present')
-
-    #             # print(processed_year_data)
-
-    #             processed_json.update({ bird_name: processed_year_data })
-
-    #     return processed_json
