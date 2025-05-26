@@ -10,6 +10,7 @@ from sklearn.cluster import KMeans
 
 from BirdData import BirdData
 
+# next: https://scikit-learn.org/stable/auto_examples/cluster/plot_dbscan.html#sphx-glr-auto-examples-cluster-plot-dbscan-py
 
 def translate_json_to_bird_data(input_filename: str) -> BirdData:
     raw_json = {}
