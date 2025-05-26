@@ -190,17 +190,18 @@ def kmeans_test_run(bird_data: BirdData):
     plt.scatter(x, y, c=kmeans.labels_)
     plt.show()
 
+
 def cosine_kmeans(bird_data: BirdData):
     x_indices = range(0, len(bird_data.bird_names))
     results_by_bird_index: list[list[float]] = []
-    house_sparrow_index = bird_data.bird_names.index("House Sparrow")
+    house_sparrow_index = bird_data.bird_names.index("Northern Cardinal")
 
     # get the values
     for bird_name in bird_data.bird_names:
         results = calculate_cosine_similarities(
             data=bird_data,
             comparison_bird_name=bird_name,
-            how='howMany',
+            how="numberByPartyHours",
         )
 
         vals: list[float] = list(list(zip(*results))[1])
@@ -215,26 +216,24 @@ def cosine_kmeans(bird_data: BirdData):
     inertias = []
 
     # the max number of clusters is 1 per point
-    cluster_range = range(1, len(x))
+    cluster_range = range(1, 25)
 
     # this gives us an "elbow" to show which cluster count is good
-    # for i in cluster_range:
-    #     print(".", end="")
-    #     kmeans = KMeans(n_clusters=i)
-    #     kmeans.fit(data)
-    #     inertias.append(kmeans.inertia_)
+    for i in cluster_range:
+        print(".", end="")
+        kmeans = KMeans(n_clusters=i,init="random")
+        kmeans.fit(data)
+        inertias.append(kmeans.inertia_)
 
-    # plt.plot(cluster_range, inertias, marker="o")
-    # plt.title("Elbow method")
-    # plt.xlabel("Number of clusters")
-    # plt.ylabel("Inertia")
-    # plt.show()
+    plt.plot(cluster_range, inertias, marker="o")
+    plt.title("Elbow method")
+    plt.xlabel("Number of clusters")
+    plt.ylabel("Inertia")
+    plt.show()
 
     cluster_count = 4
     kmeans = KMeans(n_clusters=cluster_count)
     kmeans.fit(data)
-
-    print(len(x), len(y))
 
     plt.scatter(x, y, c=kmeans.labels_)
     plt.show()
