@@ -191,109 +191,7 @@ def kmeans_test_run(bird_data: BirdData):
     plt.scatter(x, y, c=kmeans.labels_)
     plt.show()
 
-
-def cosine_kmeans(bird_data: BirdData, target_bird_name: str):
-    x_indices = range(0, len(bird_data.bird_names))
-    results_by_bird_index: list[list[float]] = []
-    target_bird_index = bird_data.bird_names.index(target_bird_name)
-
-    # get the values
-    for bird_name in bird_data.bird_names:
-        results = calculate_cosine_similarities(
-            data=bird_data,
-            comparison_bird_name=bird_name,
-            how="numberByPartyHours",
-        )
-
-        vals: list[float] = list(list(zip(*results))[1])
-        results_by_bird_index.append(vals)
-
-    target_bird_data = results_by_bird_index[target_bird_index]
-
-    x = x_indices
-    y = target_bird_data
-
-    data = np.array(list(zip(x, y)))
-    inertias = []
-
-    # the max number of clusters is 1 per point
-    # we cap it at 25 because that is easier to read and the elbow is way ahead of that
-    cluster_range = range(1, 25)
-
-    # this gives us an "elbow" to show which cluster count is good
-    for i in cluster_range:
-        print(".", end="")
-        kmeans = KMeans(n_clusters=i,init="random")
-        kmeans.fit(data)
-        inertias.append(kmeans.inertia_)
-
-    # plot the cluster count options
-    plt.plot(cluster_range, inertias, marker="o")
-    plt.title(f"{target_bird_name} Cosine (Elbow method)")
-    plt.xlabel("Number of clusters")
-    plt.ylabel("Inertia")
-    plt.show()
-
-    cluster_count = 4
-    kmeans = KMeans(n_clusters=cluster_count)
-    kmeans.fit(data)
-
-    # plot the bird indexes + cosine similarities
-    plt.title(f"{target_bird_name}: Cosine")
-    plt.scatter(x, y, c=kmeans.labels_)
-    plt.show()
-
-def hausdorff_kmeans(bird_data: BirdData, target_bird_name: str):
-    x_indices = range(0, len(bird_data.bird_names))
-    results_by_bird_index: list[list[float]] = []
-    target_bird_index = bird_data.bird_names.index(target_bird_name)
-
-    # get the values
-    for bird_name in bird_data.bird_names:
-        results = calculate_hausdorff_distance(
-            data=bird_data,
-            comparison_bird_name=bird_name,
-            # NOTE: this is where you change which key you're using
-            how="numberByPartyHours",
-        )
-
-        vals: list[float] = list(list(zip(*results))[1])
-        results_by_bird_index.append(vals)
-
-    target_bird_data = results_by_bird_index[target_bird_index]
-
-    x = x_indices
-    y = target_bird_data
-
-    data = np.array(list(zip(x, y)))
-    inertias = []
-
-    # the max number of clusters is 1 per point
-    # we cap it at 25 because that is easier to read and the elbow is way ahead of that
-    cluster_range = range(1, 25)
-
-    # this gives us an "elbow" to show which cluster count is good
-    for i in cluster_range:
-        print(".", end="")
-        kmeans = KMeans(n_clusters=i,init="random")
-        kmeans.fit(data)
-        inertias.append(kmeans.inertia_)
-
-    # plot the cluster count options
-    plt.plot(cluster_range, inertias, marker="o")
-    plt.title(f"{target_bird_name} Hausdorff (Elbow method)")
-    plt.xlabel("Number of clusters")
-    plt.ylabel("Inertia")
-    plt.show()
-
-    cluster_count = 4
-    kmeans = KMeans(n_clusters=cluster_count)
-    kmeans.fit(data)
-
-    # plot the bird indexes + cosine similarities
-    plt.title(f"{target_bird_name}: Hausdorff")
-    plt.scatter(x, y, c=kmeans.labels_)
-    plt.show()
+def bare_kmeans(bird_data: BirdData):
 
 
 def main():
@@ -303,11 +201,6 @@ def main():
 
     bird = "Red-winged Blackbird"
     # kmeans_test_run(bird_data)
-    cosine_kmeans(bird_data=bird_data, target_bird_name=bird)
-
-    print("\n-------------- next is hausdorff")
-
-    hausdorff_kmeans(bird_data=bird_data, target_bird_name=bird)
 
     # write_cosine_similarities_file(bird_data=bird_data, how="howMany")
     # write_cosine_similarities_file(
