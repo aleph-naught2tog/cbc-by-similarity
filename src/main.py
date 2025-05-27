@@ -1,4 +1,3 @@
-import json
 import numpy as np
 
 import pandas as pd
@@ -7,6 +6,8 @@ import matplotlib.pyplot as plt
 import math
 
 from tslearn.clustering import TimeSeriesKMeans
+
+from transform_helpers import json_to_dataframes
 
 # next: https://scikit-learn.org/stable/auto_examples/cluster/plot_dbscan.html#sphx-glr-auto-examples-cluster-plot-dbscan-py
 
@@ -33,78 +34,15 @@ def render_bird_graphs(all_bird_series: list[pd.DataFrame]):
 
     plt.show()
 
-
-# NOTE: we are coercing None to -1
-def json_to_dataframes(
-    json_filename: str,
-) -> tuple[list[pd.DataFrame], list[str]]:
-    all_bird_series: list[pd.DataFrame] = []
-    bird_names: list[str] = []
-
-    with open(json_filename) as j:
-        d = json.load(j)
-
-        # out: {  bird_name: bird_name, x_years: [...years], y_how_many: [...howMany], y_by_party_hours: [...partyHours]}
-        for bird_name, itemsByYear in d.items():
-            byYearItems = itemsByYear.items()
-            bird_dict = {
-                # "bird_name": bird_name,
-                "x_years": [year for (year, _datum) in byYearItems],
-                "y_how_many": [
-                    (-1 if datum["howMany"] is None else datum["howMany"])
-                    for (_year, datum) in byYearItems
-                ],
-                # "y_by_party_hours": [
-                #     datum["numberByPartyHours"]
-                #     for (_year, datum) in byYearItems
-                # ],
-            }
-
-            bird_df = pd.DataFrame(bird_dict)
-            bird_df.loc[:, ["x_years", "y_how_many"]]
-            bird_df.set_index("x_years", inplace=True)
-
-            all_bird_series.append(bird_df)
-            bird_names.append(bird_name)
-
-    return (all_bird_series, bird_names)
-
-def normalize_series_lengths(mySeries):
-    series_lengths = {len(series) for series in mySeries}
-    print(series_lengths)
-
-    ind = 0
-    for series in mySeries:
-        print("["+str(ind)+"] "+series.index[0]+" "+series.index[len(series)-1])
-        ind+=1
-
-
-def timeserieskmeans_over_dataframes(input: list[pd.DataFrame]):
-    normalize_series_lengths(input)
-
-    # KMEANS https://www.kaggle.com/code/izzettunc/introduction-to-time-series-clustering?scriptVersionId=56314361&cellId=54
-
-    cluster_count = math.ceil(math.sqrt(len(input)))
-    kmeans = TimeSeriesKMeans(n_clusters=cluster_count, metric="dtw")
-
-    # dimension error here
-    # example says we need to use things as a single datum
-    # and doesn't really say how
-    # OKAY -- the dimension error was that all the series weren't the same length
-    # happily I could fix that manually
-    print(input)
-    labels = kmeans.fit_predict(input)
-
-    ## graph clusters
+def render_clusters(cluster_count, labels, input):
     plot_count = math.ceil(math.sqrt(cluster_count))
 
-    fig, axs = plt.subplots(plot_count, plot_count, figsize=(25, 25))
+    fig, axs = plt.subplots(plot_count, plot_count, figsize=(50, 50))
     fig.suptitle("Clusters")
 
     row_i = 0
     column_j = 0
-    # For each label there is,
-    # plots every series with that label
+
     for label in set(labels):
         cluster = []
         for i in range(len(labels)):
@@ -128,6 +66,33 @@ def timeserieskmeans_over_dataframes(input: list[pd.DataFrame]):
             column_j = 0
 
     plt.show()
+
+def render_cluster_counts(cluster_count, labels):
+    cluster_c = [len(labels[labels==i]) for i in range(cluster_count)]
+    cluster_n = ["Cluster "+str(i) for i in range(cluster_count)]
+    plt.figure(figsize=(15,5))
+    plt.title("Cluster Distribution for KMeans")
+    plt.bar(cluster_n,cluster_c)
+    plt.show()
+
+def timeserieskmeans_over_dataframes(input: list[pd.DataFrame]):
+
+    # KMEANS https://www.kaggle.com/code/izzettunc/introduction-to-time-series-clustering?scriptVersionId=56314361&cellId=54
+
+    # NOTE: this is honestly prob much higher than we need
+    # elbows....
+    cluster_count = math.ceil(math.sqrt(len(input)))
+
+    tskmeans = TimeSeriesKMeans(n_clusters=cluster_count, metric="dtw")
+
+    # OKAY -- the dimension error was that all the series weren't the same length
+    # happily I could fix that manually
+    labels = tskmeans.fit_predict(input)
+
+    ## graph clusters
+    # render_clusters(labels=labels, cluster_count=cluster_count, input=input)
+
+    # render_cluster_counts(cluster_count, labels)
 
 def main():
     input_filename = "data/raw/bird_map_as_json.json"
