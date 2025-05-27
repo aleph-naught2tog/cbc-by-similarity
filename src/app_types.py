@@ -5,5 +5,8 @@ RawCountDatum = TypedDict(
     {"howMany": float | None, "numberByPartyHours": float | None},
 )
 
-BirdJSON = NewType("BirdJSON", dict[str, dict[str, RawCountDatum]])
+BirdName = NewType('BirdName', str)
+Year = NewType('Year', str)
+
+BirdJSON = NewType("BirdJSON", dict[BirdName, dict[Year, RawCountDatum]])
 

@@ -1,3 +1,5 @@
+import json
+from typing import Any, cast
 import numpy as np
 
 import pandas as pd
@@ -8,6 +10,7 @@ import math
 from sklearn.cluster import KMeans
 
 from BirdData import BirdData
+from app_types import BirdJSON
 from transform_helpers import to_float_with_default
 from tslearn.clustering import TimeSeriesKMeans
 from sklearn.cluster import KMeans
@@ -55,20 +58,9 @@ def kmeans_test_run(bird_data: BirdData):
 
 
 def fake_kmeans_pd() -> None:
-    all_series = []
-
-    csv1 = [[1800, 0], [1900, 5], [2000, 25]]
-    csv2 = [[1800, 10], [1900, 7], [2000, 40]]
-    csv3 = [[1800, 0], [1900, 4], [2000, 20]]
-
-    csvs = [csv1, csv2, csv3]
-
-    for current_csv in csvs:
-        df = pd.DataFrame(current_csv, columns=["year", "value"])
-        all_series.append(df)
-
-    print(all_series[0])
-    print(len(all_series))
+    # orient="index" gives us a table of bird_name x years
+    bird_df = pd.read_json("data/raw/bird_map_as_json.json", orient="index")
+    print(bird_df)
 
     # how_many_tall = 2
     # how_many_wide = 3
@@ -90,40 +82,40 @@ def fake_kmeans_pd() -> None:
     # plt.show()
     # A good rule of thumb is choosing k as the square root of the number of points in the training data set in kNN
 
-    cluster_count = math.ceil(math.sqrt(len(all_series)))
+    # cluster_count = math.ceil(math.sqrt(len(all_series)))
 
-    plot_count = math.ceil(math.sqrt(cluster_count))
+    # plot_count = math.ceil(math.sqrt(cluster_count))
 
-    km = TimeSeriesKMeans(n_clusters=cluster_count, metric="dtw")
+    # km = TimeSeriesKMeans(n_clusters=cluster_count, metric="dtw")
 
-    labels = km.fit_predict(all_series)
+    # labels = km.fit_predict(all_series)
 
-    fig, axs = plt.subplots(plot_count, plot_count, figsize=(25, 25))
-    fig.suptitle("Clusters")
-    row_i = 0
-    column_j = 0
-    # For each label there is,
-    # plots every series with that label
-    for label in set(labels):
-        cluster = []
+    # fig, axs = plt.subplots(plot_count, plot_count, figsize=(25, 25))
+    # fig.suptitle("Clusters")
+    # row_i = 0
+    # column_j = 0
+    # # For each label there is,
+    # # plots every series with that label
+    # for label in set(labels):
+    #     cluster = []
 
-        for i in range(len(labels)):
-            if labels[i] == label:
-                axs[row_i, column_j].plot(all_series[i], c="gray", alpha=0.4)
-                cluster.append(all_series[i])
+    #     for i in range(len(labels)):
+    #         if labels[i] == label:
+    #             axs[row_i, column_j].plot(all_series[i], c="gray", alpha=0.4)
+    #             cluster.append(all_series[i])
 
-        if len(cluster) > 0:
-            axs[row_i, column_j].plot(
-                np.average(np.vstack(cluster), axis=0), c="red"
-            )
+    #     if len(cluster) > 0:
+    #         axs[row_i, column_j].plot(
+    #             np.average(np.vstack(cluster), axis=0), c="red"
+    #         )
 
-        column_j += 1
+    #     column_j += 1
 
-        if column_j % plot_count == 0:
-            row_i += 1
-            column_j = 0
+    #     if column_j % plot_count == 0:
+    #         row_i += 1
+    #         column_j = 0
 
-    plt.show()
+    # plt.show()
 
 
 def bare_kmeans(bird_data: BirdData) -> None:
@@ -162,8 +154,48 @@ def main():
     input_filename = "data/raw/bird_map_as_json.json"
 
     # bird_data = translate_json_to_bird_data(input_filename)
+    all_birds_dict = []
 
-    fake_kmeans_pd()
+    with open(input_filename) as j:
+        d = json.load(j)
+
+        # out: {  bird_name: bird_name, x_years: [...years], y_how_many: [...howMany], y_by_party_hours: [...partyHours]}
+        for bird_name, itemsByYear in d.items():
+            byYearItems = itemsByYear.items()
+            bird_dict = {
+                "bird_name": bird_name,
+                "x_years": [year for (year, _datum) in byYearItems],
+                "y_how_many": [
+                    datum["howMany"] for (_year, datum) in byYearItems
+                ],
+                "y_by_party_hours": [
+                    datum["numberByPartyHours"]
+                    for (_year, datum) in byYearItems
+                ],
+            }
+
+            all_birds_dict.append(bird_dict)
+
+            # for (year, datum) in itemsByYear.items():
+
+    df = pd.DataFrame(all_birds_dict)
+
+    print(df)
+#                            bird_name  ...                                   y_by_party_hours
+# 0    Greater White-fronted Goose  ...  [None, None, None, None, None, None, None, Non...
+# 1                     Snow Goose  ...  [None, None, None, None, None, None, None, Non...
+# 2                   Ross's Goose  ...  [None, None, None, None, None, None, None, Non...
+# 3                 Cackling Goose  ...  [None, None, None, None, None, None, None, Non...
+# 4                   Canada Goose  ...  [None, None, None, None, None, None, None, Non...
+# ..                           ...  ...                                                ...
+# 202   Spinus sp. (goldfinch sp.)  ...  [None, 0, 0, 0, 0, 0, None, 0, None, 0, 0, 0, ...
+# 203             Evening Grosbeak  ...  [None, None, None, None, None, None, None, 0, ...
+# 204                    finch sp.  ...  [None, None, None, None, None, None, None, Non...
+# 205                House Sparrow  ...  [None, None, None, None, None, None, None, Non...
+# 206                     bird sp.  ...  [None, None, None, None, None, None, None, Non...
+
+
+    # fake_kmeans_pd()
 
     # bird = "Red-winged Blackbird"
     # kmeans_test_run(bird_data)
