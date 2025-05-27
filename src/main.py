@@ -1,5 +1,4 @@
 import json
-from typing import Any, cast
 import numpy as np
 
 import pandas as pd
@@ -7,54 +6,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import math
 
-from sklearn.cluster import KMeans
-
-from BirdData import BirdData
-from app_types import BirdJSON
-from transform_helpers import to_float_with_default
 from tslearn.clustering import TimeSeriesKMeans
-from sklearn.cluster import KMeans
 
 # next: https://scikit-learn.org/stable/auto_examples/cluster/plot_dbscan.html#sphx-glr-auto-examples-cluster-plot-dbscan-py
-
-
-def kmeans_test_run(bird_data: BirdData):
-    bird_list = [
-        (year, to_float_with_default(count))
-        for (year, count) in bird_data.get_by_bird("House Sparrow", "howMany")
-    ]
-
-    x = list(list(zip(*bird_list)))[0]
-    y = list(list(zip(*bird_list)))[1]
-
-    # plt.scatter(x, y)
-    # plt.show()
-
-    data = np.array(bird_list)
-    inertias = []
-
-    # the max number of clusters is 1 per point
-    cluster_range = range(1, len(bird_list) + 1)
-
-    # this gives us an "elbow" to show which cluster count is good
-    for i in cluster_range:
-        print(".", end="")
-        kmeans = KMeans(n_clusters=i)
-        kmeans.fit(data)
-        inertias.append(kmeans.inertia_)
-
-    # plt.plot(cluster_range, inertias, marker="o")
-    # plt.title("Elbow method")
-    # plt.xlabel("Number of clusters")
-    # plt.ylabel("Inertia")
-    # plt.show()
-
-    # 2
-    kmeans = KMeans(n_clusters=3)
-    kmeans.fit(data)
-
-    plt.scatter(x, y, c=kmeans.labels_)
-    plt.show()
 
 def nan_counter(list_of_series):
     nan_polluted_series_counter = 0
@@ -64,98 +18,9 @@ def nan_counter(list_of_series):
 
     print(nan_polluted_series_counter)
 
-def fake_kmeans_pd() -> None:
-    # orient="index" gives us a table of bird_name x years
-    bird_df = pd.read_json("data/raw/bird_map_as_json.json", orient="index")
-    # print(bird_df)
-
-    # how_many_tall = 2
-    # how_many_wide = 3
-
-    # # right now, this is plotting BOTH values in the graph
-    # # so we end up with a line for the time
-    # for i in range(how_many_tall):
-    #     for j in range(how_many_wide):
-    #         index_in_plots = i * how_many_wide + j
-    #         if index_in_plots + 1 > len(all_series):
-    #             continue
-
-    #         datum = all_series[index_in_plots]
-    #         print(datum)
-
-    # axs[i, j].plot(datum)
-    # datum.plot(x='year')
-
-    # plt.show()
-    # A good rule of thumb is choosing k as the square root of the number of points in the training data set in kNN
-
-    # cluster_count = math.ceil(math.sqrt(len(all_series)))
-
-    # plot_count = math.ceil(math.sqrt(cluster_count))
-
-    # km = TimeSeriesKMeans(n_clusters=cluster_count, metric="dtw")
-
-    # labels = km.fit_predict(all_series)
-
-    # fig, axs = plt.subplots(plot_count, plot_count, figsize=(25, 25))
-    # fig.suptitle("Clusters")
-    # row_i = 0
-    # column_j = 0
-    # # For each label there is,
-    # # plots every series with that label
-    # for label in set(labels):
-    #     cluster = []
-
-    #     for i in range(len(labels)):
-    #         if labels[i] == label:
-    #             axs[row_i, column_j].plot(all_series[i], c="gray", alpha=0.4)
-    #             cluster.append(all_series[i])
-
-    #     if len(cluster) > 0:
-    #         axs[row_i, column_j].plot(
-    #             np.average(np.vstack(cluster), axis=0), c="red"
-    #         )
-
-    #     column_j += 1
-
-    #     if column_j % plot_count == 0:
-    #         row_i += 1
-    #         column_j = 0
-
-    # plt.show()
-
-
-def bare_kmeans(bird_data: BirdData) -> None:
-    timeseries_list: list[list[tuple[int, float]]] = []
-    how = "numberByPartyHours"
-
-    for bird_name in bird_data.bird_names:
-        timeseries = [
-            (int(year), to_float_with_default(count))
-            for (year, count) in bird_data.get_by_bird(bird_name, how)
-        ]
-
-        timeseries_list.append(timeseries)
-
-    # NOTE: dimension issues
-    data = pd.DataFrame(timeseries_list)
-
-    how_many_tall = 20
-    how_many_wide = 10
-    fig, axs = plt.subplots(how_many_tall, how_many_wide, figsize=(50, 50))
-
-    for i in range(how_many_tall):
-        for j in range(how_many_wide):
-            if i * how_many_wide + j + 1 > len(data):
-                continue
-
-            di = i * how_many_wide + j
-            datum = data[di]
-
-            axs[i, j].plot(list(zip(*datum.values))[0])
-
-    plt.show()
-
+"""
+NOTE: we are coercing None to -1
+"""
 # https://www.kaggle.com/code/izzettunc/introduction-to-time-series-clustering/notebook#1.-Introduction
 def another_kmeans():
     input_filename = "data/raw/bird_map_as_json.json"
@@ -174,7 +39,7 @@ def another_kmeans():
                 # "bird_name": bird_name,
                 "x_years": [year for (year, _datum) in byYearItems],
                 "y_how_many": [
-                    datum["howMany"] for (_year, datum) in byYearItems
+                    (-1 if datum["howMany"] is None else datum["howMany"]) for (_year, datum) in byYearItems
                 ],
                 # "y_by_party_hours": [
                 #     datum["numberByPartyHours"]
@@ -216,71 +81,81 @@ def another_kmeans():
 
     # plt.show()
 
-   # check to see if every series has the same length
-    series_lengths = {len(series) for series in all_bird_series}
-    # print(series_lengths)
+#    # check to see if every series has the same length
+#     series_lengths = {len(series) for series in all_bird_series}
+#     # print(series_lengths)
 
-    # the answer is no!
-    ind = 0
-    for series in all_bird_series:
-        # print("["+str(ind)+"] "+series.index[0]+" "+series.index[len(series)-1])
+#     # the answer is no!
+#     ind = 0
+#     for series in all_bird_series:
+#         # print("["+str(ind)+"] "+series.index[0]+" "+series.index[len(series)-1])
 
-        ind+=1
+#         ind+=1
 
-    # for this particular dataset we can actually see the error, BUT
-    # find the maximum length
-    max_len = max(series_lengths)
-    longest_series = None
-    for series in all_bird_series:
-        if len(series) == max_len:
-            longest_series = series
+#     # for this particular dataset we can actually see the error, BUT
+#     # find the maximum length
+#     max_len = max(series_lengths)
+#     longest_series = None
+#     for series in all_bird_series:
+#         if len(series) == max_len:
+#             longest_series = series
 
-    # FIND_MISMATCHED_SERIES
-    # we need every series to have the same length
-    # some of these have tons of nans
+#     # FIND_MISMATCHED_SERIES
+#     # we need every series to have the same length
+#     # some of these have tons of nans
 
-    # reindex everything
-    problems_index = []
+#     # reindex everything
+#     problems_index = []
 
-    for i in range(len(all_bird_series)):
-        if len(all_bird_series[i])!= max_len:
-            problems_index.append(i)
-            all_bird_series[i] = all_bird_series[i].reindex(longest_series.index)
+#     for i in range(len(all_bird_series)):
+#         if len(all_bird_series[i])!= max_len:
+#             problems_index.append(i)
+#             all_bird_series[i] = all_bird_series[i].reindex(longest_series.index)
 
-    nan_counter(all_bird_series)
+#     nan_counter(all_bird_series)
+#     # KMEANS https://www.kaggle.com/code/izzettunc/introduction-to-time-series-clustering?scriptVersionId=56314361&cellId=54
+    cluster_count = math.ceil(math.sqrt(len(all_bird_series)))
+    # kmeans = TimeSeriesKMeans(n_clusters=cluster_count, metric="dtw")
+    kmeans = TimeSeriesKMeans(n_clusters=cluster_count)
+    print(all_bird_series[0])
+    # dimension error here
+    # example says we need to use things as a single datum
+    # and doesn't really say how
+    # TODO: @NEXT try the other one?
+    labels = kmeans.fit_predict(all_bird_series)
+
+    ## graph clusters
+    plot_count = math.ceil(math.sqrt(cluster_count))
+
+    fig, axs = plt.subplots(plot_count,plot_count,figsize=(25,25))
+    fig.suptitle('Clusters')
+    row_i=0
+    column_j=0
+    # For each label there is,
+    # plots every series with that label
+    for label in set(labels):
+        cluster = []
+        for i in range(len(labels)):
+            if(labels[i]==label):
+                axs[row_i, column_j].plot(all_bird_series[i],c="gray",alpha=0.4)
+                cluster.append(all_bird_series[i])
+
+        if len(cluster) > 0:
+            axs[row_i, column_j].plot(np.average(np.vstack(cluster),axis=0),c="red")
+
+        axs[row_i, column_j].set_title("Cluster "+str(row_i * 10 + column_j))
+
+        column_j+=1
+
+        if column_j%plot_count == 0:
+            row_i+=1
+            column_j=0
+
+    plt.show()
 
 
 def main():
     another_kmeans()
-#                            bird_name  ...                                   y_by_party_hours
-# 0    Greater White-fronted Goose  ...  [None, None, None, None, None, None, None, Non...
-# 1                     Snow Goose  ...  [None, None, None, None, None, None, None, Non...
-# 2                   Ross's Goose  ...  [None, None, None, None, None, None, None, Non...
-# 3                 Cackling Goose  ...  [None, None, None, None, None, None, None, Non...
-# 4                   Canada Goose  ...  [None, None, None, None, None, None, None, Non...
-# ..                           ...  ...                                                ...
-# 202   Spinus sp. (goldfinch sp.)  ...  [None, 0, 0, 0, 0, 0, None, 0, None, 0, 0, 0, ...
-# 203             Evening Grosbeak  ...  [None, None, None, None, None, None, None, 0, ...
-# 204                    finch sp.  ...  [None, None, None, None, None, None, None, Non...
-# 205                House Sparrow  ...  [None, None, None, None, None, None, None, Non...
-# 206                     bird sp.  ...  [None, None, None, None, None, None, None, Non...
-
-
-    # fake_kmeans_pd()
-
-    # bird = "Red-winged Blackbird"
-    # kmeans_test_run(bird_data)
-    # bare_kmeans(bird_data)
-
-    # write_cosine_similarities_file(bird_data=bird_data, how="howMany")
-    # write_cosine_similarities_file(
-    #     bird_data=bird_data, how="numberByPartyHours"
-    # )
-
-    # write_hausdorff_distances_file(bird_data=bird_data, how="howMany")
-    # write_hausdorff_distances_file(
-    #     bird_data=bird_data, how="numberByPartyHours"
-    # )
 
 
 if __name__ == "__main__":
