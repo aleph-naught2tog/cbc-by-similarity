@@ -11,7 +11,7 @@ def calculate_hausdorff_distance(
     data: BirdData,
     comparison_bird_name: str,
     how: Literal["howMany"] | Literal["numberByPartyHours"],
-):
+) -> list[tuple[str, float]]:
     bird_np = np.array(
         [
             (int(year), to_float_with_default(count))

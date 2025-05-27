@@ -13,6 +13,7 @@ def translate_json_to_bird_data(input_filename: str) -> BirdData:
 
     return bird_data
 
+
 def to_float_with_default(val: float | None) -> float:
     if val is None:
         return -1
