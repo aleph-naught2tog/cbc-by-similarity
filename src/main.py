@@ -149,38 +149,67 @@ def bare_kmeans(bird_data: BirdData) -> None:
 
     plt.show()
 
-
-def main():
+def another_kmeans():
     input_filename = "data/raw/bird_map_as_json.json"
 
     # bird_data = translate_json_to_bird_data(input_filename)
     all_birds_dict = []
+    bird_names = []
 
     with open(input_filename) as j:
         d = json.load(j)
 
         # out: {  bird_name: bird_name, x_years: [...years], y_how_many: [...howMany], y_by_party_hours: [...partyHours]}
-        for bird_name, itemsByYear in d.items():
+        for index, (bird_name, itemsByYear) in enumerate(d.items()):
             byYearItems = itemsByYear.items()
             bird_dict = {
-                "bird_name": bird_name,
+                # "bird_name": bird_name,
                 "x_years": [year for (year, _datum) in byYearItems],
                 "y_how_many": [
                     datum["howMany"] for (_year, datum) in byYearItems
                 ],
-                "y_by_party_hours": [
-                    datum["numberByPartyHours"]
-                    for (_year, datum) in byYearItems
-                ],
+                # "y_by_party_hours": [
+                #     datum["numberByPartyHours"]
+                #     for (_year, datum) in byYearItems
+                # ],
             }
 
-            all_birds_dict.append(bird_dict)
+            bird_df = pd.DataFrame(bird_dict)
+            bird_df.loc[:, ["x_years", "y_how_many"]]
+            bird_df.set_index("x_years", inplace=True)
 
-            # for (year, datum) in itemsByYear.items():
+            all_birds_dict.append(bird_df)
+            bird_names.append(bird_name)
 
-    df = pd.DataFrame(all_birds_dict)
+    how_many_tall = 20
+    how_many_wide = 10
+    # fig, axs = plt.subplots(how_many_tall, how_many_wide, figsize=(50, 50))
+    fig, axs = plt.subplots(how_many_tall, how_many_wide, figsize=(50, 50))
 
-    print(df)
+
+    # datum = all_birds_dict[42]
+
+    # print(datum)
+
+    # datum.plot()
+
+    for i in range(how_many_tall):
+        for j in range(how_many_wide):
+            if i * how_many_wide + j + 1 > len(all_birds_dict):
+                continue
+
+            di = i * how_many_wide + j
+            datum = all_birds_dict[di]
+            print(datum)
+
+            axs[i, j].plot(datum.values)
+            axs[i, j].set_title(bird_names[di])
+
+
+    plt.show()
+
+def main():
+    another_kmeans()
 #                            bird_name  ...                                   y_by_party_hours
 # 0    Greater White-fronted Goose  ...  [None, None, None, None, None, None, None, Non...
 # 1                     Snow Goose  ...  [None, None, None, None, None, None, None, Non...
