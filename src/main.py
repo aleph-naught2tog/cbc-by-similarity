@@ -56,11 +56,18 @@ def kmeans_test_run(bird_data: BirdData):
     plt.scatter(x, y, c=kmeans.labels_)
     plt.show()
 
+def nan_counter(list_of_series):
+    nan_polluted_series_counter = 0
+    for series in list_of_series:
+        if series.isnull().sum().sum() > 0:
+            nan_polluted_series_counter+=1
+
+    print(nan_polluted_series_counter)
 
 def fake_kmeans_pd() -> None:
     # orient="index" gives us a table of bird_name x years
     bird_df = pd.read_json("data/raw/bird_map_as_json.json", orient="index")
-    print(bird_df)
+    # print(bird_df)
 
     # how_many_tall = 2
     # how_many_wide = 3
@@ -149,18 +156,19 @@ def bare_kmeans(bird_data: BirdData) -> None:
 
     plt.show()
 
+# https://www.kaggle.com/code/izzettunc/introduction-to-time-series-clustering/notebook#1.-Introduction
 def another_kmeans():
     input_filename = "data/raw/bird_map_as_json.json"
 
     # bird_data = translate_json_to_bird_data(input_filename)
-    all_birds_dict = []
+    all_bird_series = []
     bird_names = []
 
     with open(input_filename) as j:
         d = json.load(j)
 
         # out: {  bird_name: bird_name, x_years: [...years], y_how_many: [...howMany], y_by_party_hours: [...partyHours]}
-        for index, (bird_name, itemsByYear) in enumerate(d.items()):
+        for bird_name, itemsByYear in d.items():
             byYearItems = itemsByYear.items()
             bird_dict = {
                 # "bird_name": bird_name,
@@ -178,35 +186,69 @@ def another_kmeans():
             bird_df.loc[:, ["x_years", "y_how_many"]]
             bird_df.set_index("x_years", inplace=True)
 
-            all_birds_dict.append(bird_df)
+            all_bird_series.append(bird_df)
             bird_names.append(bird_name)
 
-    how_many_tall = 20
-    how_many_wide = 10
+    # how_many_tall = 20
+    # how_many_wide = 10
+    # # fig, axs = plt.subplots(how_many_tall, how_many_wide, figsize=(50, 50))
     # fig, axs = plt.subplots(how_many_tall, how_many_wide, figsize=(50, 50))
-    fig, axs = plt.subplots(how_many_tall, how_many_wide, figsize=(50, 50))
 
 
-    # datum = all_birds_dict[42]
+    # # datum = all_birds_dict[42]
 
-    # print(datum)
+    # # print(datum)
 
-    # datum.plot()
+    # # datum.plot()
 
-    for i in range(how_many_tall):
-        for j in range(how_many_wide):
-            if i * how_many_wide + j + 1 > len(all_birds_dict):
-                continue
+    # for i in range(how_many_tall):
+    #     for j in range(how_many_wide):
+    #         if i * how_many_wide + j + 1 > len(all_bird_series):
+    #             continue
 
-            di = i * how_many_wide + j
-            datum = all_birds_dict[di]
-            print(datum)
+    #         di = i * how_many_wide + j
+    #         datum = all_bird_series[di]
+    #         print(datum)
 
-            axs[i, j].plot(datum.values)
-            axs[i, j].set_title(bird_names[di])
+    #         axs[i, j].plot(datum.values)
+    #         axs[i, j].set_title(bird_names[di])
 
 
-    plt.show()
+    # plt.show()
+
+   # check to see if every series has the same length
+    series_lengths = {len(series) for series in all_bird_series}
+    # print(series_lengths)
+
+    # the answer is no!
+    ind = 0
+    for series in all_bird_series:
+        # print("["+str(ind)+"] "+series.index[0]+" "+series.index[len(series)-1])
+
+        ind+=1
+
+    # for this particular dataset we can actually see the error, BUT
+    # find the maximum length
+    max_len = max(series_lengths)
+    longest_series = None
+    for series in all_bird_series:
+        if len(series) == max_len:
+            longest_series = series
+
+    # FIND_MISMATCHED_SERIES
+    # we need every series to have the same length
+    # some of these have tons of nans
+
+    # reindex everything
+    problems_index = []
+
+    for i in range(len(all_bird_series)):
+        if len(all_bird_series[i])!= max_len:
+            problems_index.append(i)
+            all_bird_series[i] = all_bird_series[i].reindex(longest_series.index)
+
+    nan_counter(all_bird_series)
+
 
 def main():
     another_kmeans()
