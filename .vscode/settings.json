@@ -1,6 +1,10 @@
 {
   "cSpell.words": [
+    "figsize",
     "genfromtxt",
-    "loadtxt"
+    "loadtxt",
+    "suptitle",
+    "timeserieskmeans",
+    "tslearn"
   ]
 }
