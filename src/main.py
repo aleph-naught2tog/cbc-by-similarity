@@ -1,3 +1,6 @@
+import getopt
+import sys
+from typing import Optional
 import numpy as np
 
 import pandas as pd
@@ -34,6 +37,7 @@ def render_bird_graphs(all_bird_series: list[pd.DataFrame]):
 
     plt.show()
 
+
 def render_clusters(cluster_count, labels, input):
     plot_count = math.ceil(math.sqrt(cluster_count))
 
@@ -47,9 +51,7 @@ def render_clusters(cluster_count, labels, input):
         cluster = []
         for i in range(len(labels)):
             if labels[i] == label:
-                axs[row_i, column_j].plot(
-                    input[i], c="gray", alpha=0.4
-                )
+                axs[row_i, column_j].plot(input[i], c="gray", alpha=0.4)
                 cluster.append(input[i])
 
         if len(cluster) > 0:
@@ -67,21 +69,25 @@ def render_clusters(cluster_count, labels, input):
 
     plt.show()
 
+
 def render_cluster_counts(cluster_count, labels):
-    cluster_c = [len(labels[labels==i]) for i in range(cluster_count)]
-    cluster_n = ["Cluster "+str(i) for i in range(cluster_count)]
-    plt.figure(figsize=(15,5))
+    cluster_c = [len(labels[labels == i]) for i in range(cluster_count)]
+    cluster_n = ["Cluster " + str(i) for i in range(cluster_count)]
+    plt.figure(figsize=(15, 5))
     plt.title("Cluster Distribution for KMeans")
-    plt.bar(cluster_n,cluster_c)
+    plt.bar(cluster_n, cluster_c)
     plt.show()
 
-def timeserieskmeans_over_dataframes(input: list[pd.DataFrame]):
+
+def timeserieskmeans_over_dataframes(
+    input: list[pd.DataFrame], row_keys: list[str], cluster_count: int | None
+):
 
     # KMEANS https://www.kaggle.com/code/izzettunc/introduction-to-time-series-clustering?scriptVersionId=56314361&cellId=54
 
     # NOTE: this is honestly prob much higher than we need
     # elbows....
-    cluster_count = math.ceil(math.sqrt(len(input)))
+    cluster_count = cluster_count or int(math.sqrt(len(input)))
 
     tskmeans = TimeSeriesKMeans(n_clusters=cluster_count, metric="dtw")
 
@@ -94,12 +100,42 @@ def timeserieskmeans_over_dataframes(input: list[pd.DataFrame]):
 
     # render_cluster_counts(cluster_count, labels)
 
+    fancy_names_for_labels = [f"Cluster {label}" for label in labels]
+
+    labeled_cluster_df = (
+        pd.DataFrame(
+            zip(row_keys, fancy_names_for_labels), columns=["Series", "Cluster"]
+        )
+        .sort_values(by="Cluster")
+        .set_index("Series")
+    )
+
+    print(labeled_cluster_df)
+
+    dimensionality_stuff(mySeries)
+
+def dimensionality_stuff(mySeries):
+    pca = PCA(n_components=2)
+
+    mySeries_transformed = pca.fit_transform(mySeries)
+
+
 def main():
+    options = "c:"
+    long_options = ["cluster_count="]
+
+    arguments = getopt.getopt(sys.argv[1:], options, long_options)
+    arg_cluster_count = arguments[0]
+
+    cluster_count = int(arg_cluster_count[0][1]) if arg_cluster_count else None
+
     input_filename = "data/raw/bird_map_as_json.json"
 
-    (all_bird_series, _bird_names) = json_to_dataframes(input_filename)
+    (all_bird_series, bird_names) = json_to_dataframes(input_filename)
 
-    timeserieskmeans_over_dataframes(input=all_bird_series)
+    timeserieskmeans_over_dataframes(
+        input=all_bird_series, row_keys=bird_names, cluster_count=cluster_count
+    )
 
 
 if __name__ == "__main__":
