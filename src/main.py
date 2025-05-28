@@ -3,42 +3,45 @@ import math
 import pandas as pd
 import sys
 
+from plotters import render_cluster_counts, render_clusters
 from transform_helpers import json_to_dataframes
 from tslearn.clustering import TimeSeriesKMeans
 
 
 def timeserieskmeans_over_dataframes(
-    input: list[pd.DataFrame],
+    all_bird_series: list[pd.DataFrame],
     dataframe_titles: list[str],
     cluster_count: int | None,
 ):
     # NOTE: this is honestly prob much higher than we need
     # elbows....
-    cluster_count = cluster_count or int(math.sqrt(len(input)))
+    cluster_count = cluster_count or int(math.sqrt(len(all_bird_series)))
 
     tskmeans = TimeSeriesKMeans(n_clusters=cluster_count, metric="dtw")
 
     # OKAY -- the dimension error was that all the series weren't the same length
     # happily I could fix that manually
-    labels = tskmeans.fit_predict(input)
+    labels = tskmeans.fit_predict(all_bird_series)
 
     ## graph clusters
-    # render_clusters(labels=labels, cluster_count=cluster_count, input=input)
+    render_clusters(
+        labels=labels,
+        cluster_count=cluster_count,
+        all_bird_series=all_bird_series,
+    )
 
-    # render_cluster_counts(cluster_count, labels)
-
-    fancy_names_for_labels = [f"Cluster {label}" for label in labels]
+    render_cluster_counts(cluster_count, labels)
 
     labeled_cluster_df = (
         pd.DataFrame(
-            zip(dataframe_titles, fancy_names_for_labels),
-            columns=["Series", "Cluster"],
+            zip(dataframe_titles, labels),
+            columns=["Bird", "Cluster"],
         )
         .sort_values(by="Cluster")
-        .set_index("Series")
+        .set_index("Bird")
     )
 
-    print(labeled_cluster_df)
+    labeled_cluster_df.to_csv("birds_and_cluster_indices-byPartyHour.csv")
 
 
 def get_cluster_count() -> int | None:
@@ -61,7 +64,7 @@ def main():
     (all_bird_series, bird_names) = json_to_dataframes(input_filename)
 
     timeserieskmeans_over_dataframes(
-        input=all_bird_series,
+        all_bird_series=all_bird_series,
         dataframe_titles=bird_names,
         cluster_count=number_of_clusters,
     )
