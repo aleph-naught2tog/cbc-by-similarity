@@ -4,12 +4,13 @@ from typing import Literal
 
 import numpy as np
 from BirdData import BirdData
+from app_types import BirdName
 from transform_helpers import to_float_with_default
 
 
 def calculate_hausdorff_distance(
     data: BirdData,
-    comparison_bird_name: str,
+    comparison_bird_name: BirdName,
     how: Literal["howMany"] | Literal["numberByPartyHours"],
 ) -> list[tuple[str, float]]:
     bird_np = np.array(
@@ -39,9 +40,9 @@ def calculate_hausdorff_distance(
 
 def calculate_cosine_similarities(
     data: BirdData,
-    comparison_bird_name: str,
+    comparison_bird_name: BirdName,
     how: Literal["howMany"] | Literal["numberByPartyHours"],
-):
+) -> list[tuple[str, float]]:
     bird_list = [
         to_float_with_default(count)
         for (_year, count) in data.get_by_bird(comparison_bird_name, how)

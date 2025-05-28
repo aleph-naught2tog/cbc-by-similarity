@@ -2,13 +2,33 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from tslearn.clustering.kmeans import TimeSeriesKMeans
+
+def render_elbows(all_bird_series: list[pd.DataFrame]) -> None:
+    inertias = []
+
+    # 20 is just a reasonable default
+    cluster_counts = list(range(1, 20))
+
+    for k in cluster_counts:
+        tskmeans = TimeSeriesKMeans(n_clusters=k)
+        tskmeans.fit(all_bird_series)
+        inertias.append(tskmeans.inertia_)
+
+    # Plot sse against k
+    plt.figure(figsize=(6, 6))
+    plt.plot(cluster_counts, inertias, '-o')
+    plt.xlabel(r'Number of clusters *k*')
+    plt.ylabel('Sum of squared distance');
+
+    plt.show()
 
 
-def render_bird_graphs(all_bird_series: list[pd.DataFrame]):
+def render_bird_graphs(all_bird_series: list[pd.DataFrame], bird_names: list[str]) -> None:
     how_many_tall = 20
     how_many_wide = 10
 
-    _fig, axs = plt.subplots(how_many_tall, how_many_wide, figsize=(50, 50))
+    _fig, axs = plt.subplots(how_many_tall, how_many_wide, figsize=(50, 50)) # type: ignore
 
     for i in range(how_many_tall):
         for j in range(how_many_wide):
@@ -26,8 +46,8 @@ def render_bird_graphs(all_bird_series: list[pd.DataFrame]):
 
 
 def render_clusters(
-    cluster_count: int, labels: list[str], all_bird_series: list[pd.DataFrame]
-):
+    cluster_count: int, labels: list[int], all_bird_series: list[pd.DataFrame]
+) -> None:
     plot_count = math.ceil(math.sqrt(cluster_count))
 
     fig, axs = plt.subplots(plot_count, plot_count, figsize=(50, 50))
@@ -61,7 +81,7 @@ def render_clusters(
     plt.show()
 
 
-def render_cluster_counts(cluster_count: int, labels: list[str]):
+def render_cluster_counts(cluster_count: int, labels: list[int]) -> None:
     cluster_c = [len(labels[labels == i]) for i in range(cluster_count)]
     cluster_n = ["Cluster " + str(i) for i in range(cluster_count)]
 

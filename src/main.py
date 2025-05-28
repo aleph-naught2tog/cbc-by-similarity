@@ -3,45 +3,47 @@ import math
 import pandas as pd
 import sys
 
-from plotters import render_cluster_counts, render_clusters
+from plotters import render_bird_graphs, render_cluster_counts, render_clusters, render_elbows
 from transform_helpers import json_to_dataframes
 from tslearn.clustering import TimeSeriesKMeans
-
 
 def timeserieskmeans_over_dataframes(
     all_bird_series: list[pd.DataFrame],
     dataframe_titles: list[str],
     cluster_count: int | None,
-):
+) -> None:
     # NOTE: this is honestly prob much higher than we need
     # elbows....
     cluster_count = cluster_count or int(math.sqrt(len(all_bird_series)))
 
     tskmeans = TimeSeriesKMeans(n_clusters=cluster_count, metric="dtw")
+    render_elbows(all_bird_series)
 
     # OKAY -- the dimension error was that all the series weren't the same length
     # happily I could fix that manually
-    labels = tskmeans.fit_predict(all_bird_series)
+    # labels = tskmeans.fit_predict(all_bird_series)
 
-    ## graph clusters
-    render_clusters(
-        labels=labels,
-        cluster_count=cluster_count,
-        all_bird_series=all_bird_series,
-    )
+    # render_bird_graphs(all_bird_series, bird_names=dataframe_titles)
 
-    render_cluster_counts(cluster_count, labels)
+    # ## graph clusters
+    # render_clusters(
+    #     labels=labels,
+    #     cluster_count=cluster_count,
+    #     all_bird_series=all_bird_series,
+    # )
 
-    labeled_cluster_df = (
-        pd.DataFrame(
-            zip(dataframe_titles, labels),
-            columns=["Bird", "Cluster"],
-        )
-        .sort_values(by="Cluster")
-        .set_index("Bird")
-    )
+    # render_cluster_counts(cluster_count, labels)
 
-    labeled_cluster_df.to_csv("birds_and_cluster_indices-byPartyHour.csv")
+    # labeled_cluster_df = (
+    #     pd.DataFrame(
+    #         zip(dataframe_titles, labels),
+    #         columns=["Bird", "Cluster"],
+    #     )
+    #     .sort_values(by="Cluster")
+    #     .set_index("Bird")
+    # )
+
+    # labeled_cluster_df.to_csv("birds_and_cluster_indices-byPartyHour.csv")
 
 
 def get_cluster_count() -> int | None:
@@ -56,7 +58,7 @@ def get_cluster_count() -> int | None:
     return cluster_count
 
 
-def main():
+def main() -> None:
     number_of_clusters = get_cluster_count()
 
     input_filename = "data/raw/bird_map_as_json.json"
