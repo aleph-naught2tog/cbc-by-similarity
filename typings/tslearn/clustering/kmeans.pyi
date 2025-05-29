@@ -10,7 +10,7 @@ from typing import Literal, NewType, NotRequired, Sequence, TypedDict, Unpack
 TimeSeriesDataSet = NewType("TimeSeriesDataSet", tuple[int, int, int])
 
 # added: mrc
-class _TSKM_INIT_KWARGS(TypedDict):
+class __DefTSKMInitKwargs(TypedDict):
     n_clusters: NotRequired[int]
     metric: NotRequired[
         Literal["dtw"] | Literal["softdtw"] | Literal["dtw"]
@@ -19,6 +19,6 @@ class _TSKM_INIT_KWARGS(TypedDict):
 class TimeSeriesKMeans:
     inertia_: float
     n_iter_: int
-    def __init__(self, **kwargs: Unpack[_TSKM_INIT_KWARGS]) -> None: ...
+    def __init__(self, **kwargs: Unpack[__DefTSKMInitKwargs]) -> None: ...
     def fit(self, X: Sequence[TimeSeriesDataSet]) -> None: ...
     def fit_predict(self, X: Sequence[TimeSeriesDataSet]) -> Sequence[TimeSeriesDataSet]: ...
