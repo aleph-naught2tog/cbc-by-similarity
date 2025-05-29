@@ -3,7 +3,8 @@ import math
 import pandas as pd
 import sys
 
-from plotters import render_bird_graphs, render_cluster_counts, render_clusters, render_elbows
+# from plotters import render_bird_graphs, render_cluster_counts, render_clusters, render_elbows
+from plotters import render_elbows
 from transform_helpers import json_to_dataframes
 from tslearn.clustering import TimeSeriesKMeans
 
@@ -16,11 +17,11 @@ def timeserieskmeans_over_dataframes(
     # elbows....
     cluster_count = cluster_count or int(math.sqrt(len(all_bird_series)))
 
-    tskmeans = TimeSeriesKMeans(n_clusters=cluster_count, metric="dtw")
     render_elbows(all_bird_series)
 
     # OKAY -- the dimension error was that all the series weren't the same length
     # happily I could fix that manually
+    _tskmeans = TimeSeriesKMeans(n_clusters=cluster_count, metric="dtw")
     # labels = tskmeans.fit_predict(all_bird_series)
 
     # render_bird_graphs(all_bird_series, bird_names=dataframe_titles)

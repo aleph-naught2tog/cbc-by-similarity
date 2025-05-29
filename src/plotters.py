@@ -1,8 +1,9 @@
 import math
+from typing import cast
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from tslearn.clustering.kmeans import TimeSeriesKMeans
+from tslearn.clustering.kmeans import TimeSeriesKMeans, TimeSeriesDataSet
 
 def render_elbows(all_bird_series: list[pd.DataFrame]) -> None:
     # inertia = the spread/variation of data points around the mean
@@ -18,7 +19,7 @@ def render_elbows(all_bird_series: list[pd.DataFrame]) -> None:
         tskmeans = TimeSeriesKMeans(n_clusters=k)
 
         # .fit = compute the actual clustering
-        tskmeans.fit(all_bird_series)
+        tskmeans.fit(cast(list[TimeSeriesDataSet], all_bird_series) )
         print(tskmeans.n_iter_)
 
         # save the inertia for checking
@@ -37,8 +38,6 @@ def render_elbows(all_bird_series: list[pd.DataFrame]) -> None:
     plt.xlabel('Number of clusters (k)')
     plt.ylabel('Inertia');
 
-    plt.show()
-
 
 def render_bird_graphs(all_bird_series: list[pd.DataFrame], bird_names: list[str]) -> None:
     how_many_tall = 20
@@ -55,6 +54,7 @@ def render_bird_graphs(all_bird_series: list[pd.DataFrame], bird_names: list[str
             datum = all_bird_series[di]
             print(datum)
 
+            # `DataFrame.to_numpy is preferred` <- this just doesn't work
             axs[i, j].plot(datum.values)
             axs[i, j].set_title(bird_names[di])
 
@@ -102,7 +102,8 @@ def render_clusters(
 def render_cluster_counts(cluster_count: int, labels: list[int]) -> None:
     print(type(labels))
     cluster_bar_heights = [
-        len(labels[labels == i])
+        # QUESTION: how and why does this work
+        len(labels[labels == i]) # type: ignore
         for i in range(cluster_count)
     ]
 
