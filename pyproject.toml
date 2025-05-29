@@ -14,3 +14,22 @@ dependencies = [
     "scipy>=1.13.1",
     "tslearn>=0.6.3",
 ]
+
+[tool.pyright]
+include = ["src"]
+exclude = ["**/node_modules",
+    "**/__pycache__",
+    "typings"
+]
+# ignore = ["src/oldstuff"]
+defineConstant = { DEBUG = true }
+stubPath = "src/stubs"
+
+reportMissingImports = "error"
+reportMissingTypeStubs = false
+
+pythonVersion = "3.12"
+
+executionEnvironments = [
+  { root = "src" }
+]
