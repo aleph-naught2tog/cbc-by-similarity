@@ -5,21 +5,37 @@ import pandas as pd
 from tslearn.clustering.kmeans import TimeSeriesKMeans
 
 def render_elbows(all_bird_series: list[pd.DataFrame]) -> None:
-    inertias = []
+    # inertia = the spread/variation of data points around the mean
+    #   for kmeans, this is that concept around the centroids of each cluster
+    #   how well the kmeans did the clumping!
+    inertias: list[float] = []
 
     # 20 is just a reasonable default
     cluster_counts = list(range(1, 20))
 
+
     for k in cluster_counts:
         tskmeans = TimeSeriesKMeans(n_clusters=k)
+
+        # .fit = compute the actual clustering
         tskmeans.fit(all_bird_series)
+        print(tskmeans.n_iter_)
+
+        # save the inertia for checking
         inertias.append(tskmeans.inertia_)
 
+    print(inertias)
+
     # Plot sse against k
-    plt.figure(figsize=(6, 6))
+    figsize_num= math.floor(math.sqrt(len(all_bird_series)))
+    figsize = (figsize_num, figsize_num)
+    plt.figure(figsize=figsize)
+
     plt.plot(cluster_counts, inertias, '-o')
-    plt.xlabel(r'Number of clusters *k*')
-    plt.ylabel('Sum of squared distance');
+
+    # label the axes
+    plt.xlabel('Number of clusters (k)')
+    plt.ylabel('Inertia');
 
     plt.show()
 
@@ -57,12 +73,14 @@ def render_clusters(
     column_j = 0
 
     for label in set(labels):
-        cluster = []
+        cluster: list[pd.DataFrame] = []
+
         for i in range(len(labels)):
             if labels[i] == label:
                 axs[row_i, column_j].plot(
                     all_bird_series[i], c="gray", alpha=0.4
                 )
+
                 cluster.append(all_bird_series[i])
 
         if len(cluster) > 0:
@@ -82,11 +100,16 @@ def render_clusters(
 
 
 def render_cluster_counts(cluster_count: int, labels: list[int]) -> None:
-    cluster_c = [len(labels[labels == i]) for i in range(cluster_count)]
-    cluster_n = ["Cluster " + str(i) for i in range(cluster_count)]
+    print(type(labels))
+    cluster_bar_heights = [
+        len(labels[labels == i])
+        for i in range(cluster_count)
+    ]
+
+    cluster_bar_labels = ["Cluster " + str(i) for i in range(cluster_count)]
 
     plt.figure(figsize=(15, 5))
     plt.title("Cluster Distribution for KMeans")
-    plt.bar(cluster_n, cluster_c)
+    plt.bar(cluster_bar_labels, cluster_bar_heights)
 
     plt.show()
