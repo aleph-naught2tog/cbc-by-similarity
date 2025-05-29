@@ -5,31 +5,29 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "h5py>=3.13.0",
-    "matplotlib>=3.9.4",
-    "matplotlib-stubs>=0.1.0",
-    "numpy>=2.0.2",
-    "pandas>=2.2.3",
-    "scikit-learn>=1.6.1",
-    "scipy>=1.13.1",
-    "tslearn>=0.6.3",
+  "h5py>=3.13.0",
+  "matplotlib>=3.9.4",
+  "matplotlib-stubs>=0.1.0",
+  "numpy>=2.0.2",
+  "pandas>=2.2.3",
+  "scikit-learn>=1.6.1",
+  "scipy>=1.13.1",
+  "tslearn>=0.6.3",
 ]
 
 [tool.pyright]
 include = ["src"]
-exclude = ["**/node_modules",
-    "**/__pycache__",
-    "typings"
-]
+exclude = ["**/node_modules", "**/__pycache__"]
+
+typeCheckingMode = "strict"
+
 # ignore = ["src/oldstuff"]
-defineConstant = { DEBUG = true }
-stubPath = "src/stubs"
+# defineConstant = { DEBUG = true }
+stubPath = "typings"
 
 reportMissingImports = "error"
 reportMissingTypeStubs = false
 
 pythonVersion = "3.12"
 
-executionEnvironments = [
-  { root = "src" }
-]
+executionEnvironments = [{ root = "src" }]
