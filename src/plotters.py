@@ -5,7 +5,14 @@ import numpy as np
 import pandas as pd
 from tslearn.clustering.kmeans import TimeSeriesKMeans, TimeSeriesDataSet
 
+
 def render_elbows(all_bird_series: list[pd.DataFrame]) -> None:
+    """Calculates the elbows for our kmeans and renders them
+
+    Args:
+        all_bird_series (list[pd.DataFrame]):
+            A list of DataFrame objects containing time series information
+    """
     # inertia = the spread/variation of data points around the mean
     #   for kmeans, this is that concept around the centroids of each cluster
     #   how well the kmeans did the clumping!
@@ -14,12 +21,11 @@ def render_elbows(all_bird_series: list[pd.DataFrame]) -> None:
     # 20 is just a reasonable default
     cluster_counts = list(range(1, 20))
 
-
     for k in cluster_counts:
         tskmeans = TimeSeriesKMeans(n_clusters=k)
 
         # .fit = compute the actual clustering
-        tskmeans.fit(cast(list[TimeSeriesDataSet], all_bird_series) )
+        tskmeans.fit(cast(list[TimeSeriesDataSet], all_bird_series))
         print(tskmeans.n_iter_)
 
         # save the inertia for checking
@@ -28,22 +34,31 @@ def render_elbows(all_bird_series: list[pd.DataFrame]) -> None:
     print(inertias)
 
     # Plot sse against k
-    figsize_num= math.floor(math.sqrt(len(all_bird_series)))
+    figsize_num = math.floor(math.sqrt(len(all_bird_series)))
     figsize = (figsize_num, figsize_num)
     plt.figure(figsize=figsize)
 
-    plt.plot(cluster_counts, inertias, '-o')
+    plt.plot(cluster_counts, inertias, "-o")
 
     # label the axes
-    plt.xlabel('Number of clusters (k)')
-    plt.ylabel('Inertia');
+    plt.xlabel("Number of clusters (k)")
+    plt.ylabel("Inertia")
 
 
-def render_bird_graphs(all_bird_series: list[pd.DataFrame], bird_names: list[str]) -> None:
+def render_bird_graphs(
+    all_bird_series: list[pd.DataFrame], bird_names: list[str]
+) -> None:
+    """Renders each CBC bird graph datum
+
+    Args:
+        all_bird_series (list[pd.DataFrame]):
+            A list of DataFrame objects containing time series information
+        bird_names (list[str]): The list of bird names_
+    """
     how_many_tall = 20
     how_many_wide = 10
 
-    _fig, axs = plt.subplots(how_many_tall, how_many_wide, figsize=(50, 50)) # type: ignore
+    _fig, axs = plt.subplots(how_many_tall, how_many_wide, figsize=(50, 50))  # type: ignore
 
     for i in range(how_many_tall):
         for j in range(how_many_wide):
@@ -64,6 +79,14 @@ def render_bird_graphs(all_bird_series: list[pd.DataFrame], bird_names: list[str
 def render_clusters(
     cluster_count: int, labels: list[int], all_bird_series: list[pd.DataFrame]
 ) -> None:
+    """Given the dataset, loop over it and render each graph within its cluster
+
+    Args:
+        cluster_count (int): How many clusters to make
+        labels (list[int]): The list of labels from `fit_predict`
+        all_bird_series (list[pd.DataFrame]):
+            A list of DataFrame objects containing time series information
+    """
     plot_count = math.ceil(math.sqrt(cluster_count))
 
     fig, axs = plt.subplots(plot_count, plot_count, figsize=(50, 50))
@@ -100,10 +123,15 @@ def render_clusters(
 
 
 def render_cluster_counts(cluster_count: int, labels: list[int]) -> None:
-    print(type(labels))
+    """Render the distribution of the clusters
+
+    Args:
+        cluster_count (int): how many clusters exist
+        labels (list[int]): the labels of each cluster
+    """
     cluster_bar_heights = [
         # QUESTION: how and why does this work
-        len(labels[labels == i]) # type: ignore
+        len(labels[labels == i])  # type: ignore
         for i in range(cluster_count)
     ]
 

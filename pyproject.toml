@@ -21,8 +21,6 @@ exclude = ["**/node_modules", "**/__pycache__"]
 
 typeCheckingMode = "strict"
 
-# ignore = ["src/oldstuff"]
-# defineConstant = { DEBUG = true }
 stubPath = "typings"
 
 reportMissingImports = "error"
