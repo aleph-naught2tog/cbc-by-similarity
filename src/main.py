@@ -1,5 +1,6 @@
 import getopt
 import math
+import numpy
 import pandas as pd
 import sys
 

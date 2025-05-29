@@ -1,9 +1,10 @@
 import math
-from typing import cast
+from typing import Any, cast
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import NDArray
 import pandas as pd
-from tslearn.clustering.kmeans import TimeSeriesKMeans, TimeSeriesDataSet
+from tslearn.clustering.kmeans import TimeSeriesKMeans
 
 
 def render_elbows(all_bird_series: list[pd.DataFrame]) -> None:
@@ -25,7 +26,7 @@ def render_elbows(all_bird_series: list[pd.DataFrame]) -> None:
         tskmeans = TimeSeriesKMeans(n_clusters=k)
 
         # .fit = compute the actual clustering
-        tskmeans.fit(cast(list[TimeSeriesDataSet], all_bird_series))
+        tskmeans.fit(all_bird_series)
         print(tskmeans.n_iter_)
 
         # save the inertia for checking
@@ -38,7 +39,7 @@ def render_elbows(all_bird_series: list[pd.DataFrame]) -> None:
     figsize = (figsize_num, figsize_num)
     plt.figure(figsize=figsize)
 
-    plt.plot(cluster_counts, inertias, "-o")
+    plt.plot(cluster_counts, inertias)
 
     # label the axes
     plt.xlabel("Number of clusters (k)")
@@ -58,20 +59,23 @@ def render_bird_graphs(
     how_many_tall = 20
     how_many_wide = 10
 
-    _fig, axs = plt.subplots(how_many_tall, how_many_wide, figsize=(50, 50))  # type: ignore
+    _fig, untypedAxs = plt.subplots(how_many_tall, how_many_wide, figsize=(50, 50))
 
-    for i in range(how_many_tall):
-        for j in range(how_many_wide):
-            if i * how_many_wide + j + 1 > len(all_bird_series):
+    axs = cast(NDArray[Any], untypedAxs)
+
+    for row_i in range(how_many_tall):
+        for column_j in range(how_many_wide):
+            if row_i * how_many_wide + column_j + 1 > len(all_bird_series):
                 continue
 
-            di = i * how_many_wide + j
+            ax = axs[row_i, column_j]
+            di = row_i * how_many_wide + column_j
             datum = all_bird_series[di]
             print(datum)
 
             # `DataFrame.to_numpy is preferred` <- this just doesn't work
-            axs[i, j].plot(datum.values)
-            axs[i, j].set_title(bird_names[di])
+            ax.plot(datum.values) # type: ignore
+            ax.set_title(bird_names[di])
 
     plt.show()
 
@@ -89,7 +93,8 @@ def render_clusters(
     """
     plot_count = math.ceil(math.sqrt(cluster_count))
 
-    fig, axs = plt.subplots(plot_count, plot_count, figsize=(50, 50))
+    fig, bareAxs = plt.subplots(plot_count, plot_count, figsize=(50, 50))
+    axs = cast(NDArray[Any], bareAxs)
     fig.suptitle("Clusters")
 
     row_i = 0
@@ -97,21 +102,22 @@ def render_clusters(
 
     for label in set(labels):
         cluster: list[pd.DataFrame] = []
+        ax = axs[row_i, column_j]
 
         for i in range(len(labels)):
             if labels[i] == label:
-                axs[row_i, column_j].plot(
+                ax.plot(
                     all_bird_series[i], c="gray", alpha=0.4
                 )
 
                 cluster.append(all_bird_series[i])
 
         if len(cluster) > 0:
-            axs[row_i, column_j].plot(
+            ax.plot(
                 np.average(np.vstack(cluster), axis=0), c="red"
             )
 
-        axs[row_i, column_j].set_title("Cluster " + str(row_i * 10 + column_j))
+        ax.set_title("Cluster " + str(row_i * 10 + column_j))
 
         column_j += 1
 

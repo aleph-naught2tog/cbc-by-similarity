@@ -1,5 +1,7 @@
 from typing import Literal, NewType, NotRequired, Sequence, TypedDict, Unpack
 
+from pandas import DataFrame
+
 # NOTE: this is a handmade file using JUST the things needed and JUST the overloads/types needed for the code. This is extremely NOT exhaustive.
 
 # n_ts is the number of time series in the dataset
@@ -20,5 +22,5 @@ class TimeSeriesKMeans:
     inertia_: float
     n_iter_: int
     def __init__(self, **kwargs: Unpack[__DefTSKMInitKwargs]) -> None: ...
-    def fit(self, X: Sequence[TimeSeriesDataSet]) -> None: ...
+    def fit(self, X: Sequence[TimeSeriesDataSet] | list[DataFrame]) -> None: ...
     def fit_predict(self, X: Sequence[TimeSeriesDataSet]) -> Sequence[TimeSeriesDataSet]: ...
