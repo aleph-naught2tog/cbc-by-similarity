@@ -1,16 +1,14 @@
-import math
-import pandas as pd
-import os
-import warnings
-
-# from plotters import render_bird_graphs, render_cluster_counts, render_clusters, render_elbows
 from plotters import render_elbows
-from transform_helpers import json_to_dataframes
+
+
+import pandas as pd
 from tslearn.clustering import TimeSeriesKMeans
 
 
-# this silences all the sklearn future warnings
-warnings.filterwarnings("ignore", category=FutureWarning)
+import math
+
+
+
 
 
 def timeserieskmeans_over_dataframes(
@@ -27,6 +25,7 @@ def timeserieskmeans_over_dataframes(
     # OKAY -- the dimension error was that all the series weren't the same length
     # happily I could fix that manually
     _tskmeans = TimeSeriesKMeans(n_clusters=cluster_count, metric="dtw")
+
     # labels = tskmeans.fit_predict(all_bird_series)
 
     # render_bird_graphs(all_bird_series, bird_names=dataframe_titles)
@@ -51,20 +50,3 @@ def timeserieskmeans_over_dataframes(
 
     # labeled_cluster_df.to_csv("birds_and_cluster_indices-byPartyHour.csv")
 
-
-def main() -> None:
-    cwd_folder = os.path.dirname(os.path.realpath(__file__)).rstrip("src")
-
-    input_filename = f"{cwd_folder}/data/raw/bird_map_as_json.json"
-
-    (all_bird_series, bird_names) = json_to_dataframes(input_filename)
-
-    timeserieskmeans_over_dataframes(
-        all_bird_series=all_bird_series,
-        dataframe_titles=bird_names,
-        cluster_count=number_of_clusters,
-    )
-
-
-if __name__ == "__main__":
-    main()
