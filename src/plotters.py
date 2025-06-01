@@ -6,6 +6,8 @@ from numpy.typing import NDArray
 import pandas as pd
 from tslearn.clustering.kmeans import TimeSeriesKMeans
 
+from tslearn.barycenters import dtw_barycenter_averaging, euclidean_barycenter
+
 
 class __DefRenderElbowsKwargs(TypedDict):
     max_cluster_count: int
@@ -89,7 +91,7 @@ def render_bird_graphs(
 
 
 def render_clusters(
-    cluster_count: int, labels: list[int], all_bird_series: list[pd.DataFrame]
+    cluster_count: int, cluster_labels: list[int], all_bird_series: list[pd.DataFrame]
 ) -> None:
     """Given the dataset, loop over it and render each graph within its cluster
 
@@ -101,34 +103,91 @@ def render_clusters(
     """
     plot_count = math.ceil(math.sqrt(cluster_count))
 
-    fig, bareAxs = plt.subplots(plot_count, plot_count, figsize=(10,10))
-    axs = cast(NDArray[Any], bareAxs)
-    fig.suptitle("Clusters")
 
-    row_i = 0
-    column_j = 0
+    d = list(zip(all_bird_series, cluster_labels))
 
-    for label in set(labels):
-        cluster: list[pd.DataFrame] = []
-        ax = axs[row_i, column_j]
+    possible_labels = set(cluster_labels)
 
-        for i in range(len(labels)):
-            if labels[i] == label:
-                ax.plot(all_bird_series[i], c="gray", alpha=0.4)
+    graphs: list[list[pd.DataFrame]] = []
 
-                cluster.append(all_bird_series[i])
+    for current_label in possible_labels:
+        corresponding_bird_data = [
+            datum
+            for (datum, cluster_label) in d
+            if cluster_label == current_label
+        ]
+        # graphs.append(corresponding_bird_data)
 
-        if len(cluster) > 0:
-            average_over_graphs = np.average(np.vstack(cluster))
-            ax.plot(average_over_graphs, c="red")
+        X = corresponding_bird_data
+        ax1 = plt.subplot(4, 1, 1)
+        plt.title("Euclidean barycenter")
+        barycenter = euclidean_barycenter(X)
 
-        column_j += 1
+        # plot all points of the data set
+        for series in X:
+            plt.plot(series.to_numpy().ravel(), "k-", alpha=.2)
+        # plot the given barycenter of them
+        plt.plot(barycenter.ravel(), "r-", linewidth=2)
 
-        if column_j % plot_count == 0:
-            row_i += 1
-            column_j = 0
+        ax1.set_xlim([0, 91])
 
-    plt.show()
+        # show the plot(s)
+        plt.tight_layout()
+        plt.show()
+
+
+
+
+    # fig, bareAxs = plt.subplots(plot_count, plot_count, figsize=(10,10))
+    # axs = cast(NDArray[Any], bareAxs)
+    # fig.suptitle("Clusters")
+
+    # row_i = 0
+    # column_j = 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # # for each possible cluster label
+    # for current_cluster_label in set(cluster_labels):
+    #     clustered_graphs: list[pd.DataFrame] = []
+    #     ax = axs[row_i, column_j]
+
+    #     # for each index in the set of numbers from 1 to the last cluster label
+    #     for i in range(len(cluster_labels)):
+    #         cluster_label_in_range = cluster_labels[i]
+    #         if cluster_label_in_range == current_cluster_label:
+    #             ax.plot(all_bird_series[i], c="gray", alpha=0.4)
+
+    #             clustered_graphs.append(all_bird_series[i])
+
+    #     column_j += 1
+
+    #     if column_j % plot_count == 0:
+    #         row_i += 1
+    #         column_j = 0
+
+    # plt.tight_layout()
+    # plt.show()
 
 
 def render_cluster_counts(cluster_count: int, labels: list[int]) -> None:

@@ -2,6 +2,7 @@ import math
 import pandas as pd
 import os
 import warnings
+import matplotlib.pyplot as plt
 
 from plotters import render_bird_graphs, render_cluster_counts, render_clusters, render_elbows
 from transform_helpers import json_to_dataframes
@@ -29,7 +30,7 @@ def timeserieskmeans_over_dataframes(
 
     ## graph clusters
     render_clusters(
-        labels=cluster_labels,
+        cluster_labels=cluster_labels,
         cluster_count=cluster_count,
         all_bird_series=all_bird_series,
     )
@@ -53,7 +54,6 @@ def get_filename(relative_filename: str) -> str:
     filename_without_slash = relative_filename.lstrip('/')
 
     return f"{cwd_folder}/{filename_without_slash}"
-
 
 def main() -> None:
     input_filename = get_filename("/data/raw/bird_map_as_json.json")
