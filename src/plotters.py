@@ -1,12 +1,10 @@
-import math
-from typing import Any, Literal, NewType, NotRequired, TypedDict, Unpack, cast
+from typing import Any, Literal, NotRequired, TypedDict, Unpack, cast
 import matplotlib.pyplot as plt
-import numpy as np
 from numpy.typing import NDArray
 import pandas as pd
 from tslearn.clustering.kmeans import TimeSeriesKMeans
 
-from tslearn.barycenters import dtw_barycenter_averaging, euclidean_barycenter
+from tslearn.barycenters import euclidean_barycenter
 
 
 class __DefRenderElbowsKwargs(TypedDict):
@@ -110,8 +108,7 @@ def render_bird_graphs(
     plt.show()
 
 
-def render_clusters(
-    cluster_count: int,
+def render_clusters_with_barycenters(
     cluster_labels: list[int],
     all_bird_series: list[pd.DataFrame],
 ) -> None:
@@ -124,17 +121,16 @@ def render_clusters(
             A list of DataFrame objects containing time series information
     """
 
-    bird_with_clusters = list(zip(all_bird_series, cluster_labels))
+    birds_with_clusters = list(zip(all_bird_series, cluster_labels))
 
     possible_labels = set(cluster_labels)
 
     for current_label in possible_labels:
         corresponding_bird_data = [
             datum
-            for (datum, cluster_label) in bird_with_clusters
+            for (datum, cluster_label) in birds_with_clusters
             if cluster_label == current_label
         ]
-        # graphs.append(corresponding_bird_data)
 
         ax1 = plt.subplot(4, 1, 1)
         plt.title("Euclidean barycenter")
@@ -162,7 +158,6 @@ def render_cluster_counts(cluster_count: int, labels: list[int]) -> None:
         labels (list[int]): the labels of each cluster
     """
     cluster_bar_heights = [
-        # QUESTION: how and why does this work
         len(labels[labels == i])  # type: ignore
         for i in range(cluster_count)
     ]
