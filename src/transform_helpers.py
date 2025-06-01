@@ -37,22 +37,22 @@ def json_to_dataframes(
             bird_dict = {
                 # "bird_name": bird_name,
                 "x_years": [year for (year, _datum) in byYearItems],
-                # "y_how_many": [
-                #     (-1 if datum["howMany"] is None else datum["howMany"])
-                #     for (_year, datum) in byYearItems
-                # ],
-                "y_by_party_hours": [
-                    (
-                        -1
-                        if datum["numberByPartyHours"] is None
-                        else datum["numberByPartyHours"]
-                    )
+                "y_how_many": [
+                    (-1 if datum["howMany"] is None else datum["howMany"])
                     for (_year, datum) in byYearItems
                 ],
+                # "y_by_party_hours": [
+                #     (
+                #         -1
+                #         if datum["numberByPartyHours"] is None
+                #         else datum["numberByPartyHours"]
+                #     )
+                #     for (_year, datum) in byYearItems
+                # ],
             }
 
             bird_df = pd.DataFrame(bird_dict)
-            bird_df.loc[:, ["x_years", "y_by_party_hours"]]
+            bird_df.loc[:, ["x_years", "y_how_many"]]
             bird_df.set_index("x_years", inplace=True)  # type: ignore bc/3rd party
 
             all_bird_series.append(bird_df)
