@@ -25,7 +25,7 @@ def to_float_with_default(val: float | None) -> float:
 # NOTE: we are coercing None to -1
 def json_to_dataframes(
     json_filename: str,
-    # how: Literal["how_many"] | Literal["by_party_hours"]
+    how: Literal["how_many"] | Literal["by_party_hours"] = "how_many"
 ) -> tuple[list[pd.DataFrame], list[str]]:
     all_bird_series: list[pd.DataFrame] = []
     bird_names: list[str] = []
@@ -55,7 +55,7 @@ def json_to_dataframes(
 
             bird_df = pd.DataFrame(bird_dict)
             bird_df.loc[:, ["x_years", "y_how_many"]]
-            bird_df.set_index("x_years", inplace=True)  # type: ignore bc/3rd party
+            bird_df.set_index("x_years", inplace=True)
 
             all_bird_series.append(bird_df)
             bird_names.append(bird_name)

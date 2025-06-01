@@ -1,5 +1,5 @@
 import math
-from typing import Any, TypedDict, Unpack, cast
+from typing import Any, Literal, NewType, NotRequired, TypedDict, Unpack, cast
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
@@ -11,19 +11,16 @@ from tslearn.barycenters import dtw_barycenter_averaging, euclidean_barycenter
 
 class __DefRenderElbowsKwargs(TypedDict):
     max_cluster_count: int
+    metric: NotRequired[Literal["dtw", "softdtw"]]
 
-def render_elbows(
-    all_bird_series: list[pd.DataFrame],
-    **kwargs: Unpack[__DefRenderElbowsKwargs],
-) -> None:
+
+def compute_inertias(
+    series: list[pd.DataFrame], **kwargs: Unpack[__DefRenderElbowsKwargs]
+) -> tuple[list[float], list[int]]:
+    metric = kwargs.get("metric", None)
     max_cluster_count = kwargs["max_cluster_count"]
 
-    """Calculates the elbows for our kmeans and renders them
-
-    Args:
-        all_bird_series (list[pd.DataFrame]):
-            A list of DataFrame objects containing time series information
-    """
+    metric_kwargs = {"metric": metric} if metric else {}
 
     # inertia = the spread/variation of data points around the mean
     #   for kmeans, this is that concept around the centroids of each cluster
@@ -34,16 +31,39 @@ def render_elbows(
     cluster_counts = list(range(1, max_cluster_count))
 
     for k in cluster_counts:
-        # NOTE: might be able to clean things up so that we save all the clusters and then just call predict on the set with the cluster count we want
-        tskmeans = TimeSeriesKMeans(n_clusters=k)
+        # NOTE: might be able to clean things up so that we save all the clusters and then just call predict on the set with the cluster count we want... we do it here over euclidean distance, which is 1000000x faster than dtw
+        tskmeans = TimeSeriesKMeans(n_clusters=k, **metric_kwargs)  # type: ignore -- it's angry because it widens `metric` to a string
 
         # .fit = compute the actual clustering
-        tskmeans.fit(all_bird_series)
+        tskmeans.fit(series)
 
         # save the inertia for checking
         inertias.append(tskmeans.inertia_)
 
-    # Plot sse against k
+    return (inertias, cluster_counts)
+
+
+def render_elbows(
+    all_bird_series: list[pd.DataFrame],
+    **kwargs: Unpack[__DefRenderElbowsKwargs],
+) -> None:
+    max_cluster_count = kwargs["max_cluster_count"]
+    metric = kwargs.get("metric", None)
+    metric_kwargs = {"metric": metric} if metric else {}
+    """Calculates the elbows for our kmeans and renders them
+
+    Args:
+        all_bird_series (list[pd.DataFrame]):
+            A list of DataFrame objects containing time series information
+    """
+
+    (inertias, cluster_counts) = compute_inertias(
+        all_bird_series,
+        max_cluster_count=max_cluster_count,
+        **metric_kwargs,  # type: ignore -- it's angry because it widens `metric` to a string
+    )
+
+
     figsize_num = 6
     figsize = (figsize_num, figsize_num)
     plt.figure(figsize=figsize)
@@ -91,7 +111,9 @@ def render_bird_graphs(
 
 
 def render_clusters(
-    cluster_count: int, cluster_labels: list[int], all_bird_series: list[pd.DataFrame]
+    cluster_count: int,
+    cluster_labels: list[int],
+    all_bird_series: list[pd.DataFrame],
 ) -> None:
     """Given the dataset, loop over it and render each graph within its cluster
 
@@ -101,93 +123,35 @@ def render_clusters(
         all_bird_series (list[pd.DataFrame]):
             A list of DataFrame objects containing time series information
     """
-    plot_count = math.ceil(math.sqrt(cluster_count))
 
-
-    d = list(zip(all_bird_series, cluster_labels))
+    bird_with_clusters = list(zip(all_bird_series, cluster_labels))
 
     possible_labels = set(cluster_labels)
-
-    graphs: list[list[pd.DataFrame]] = []
 
     for current_label in possible_labels:
         corresponding_bird_data = [
             datum
-            for (datum, cluster_label) in d
+            for (datum, cluster_label) in bird_with_clusters
             if cluster_label == current_label
         ]
         # graphs.append(corresponding_bird_data)
 
-        X = corresponding_bird_data
         ax1 = plt.subplot(4, 1, 1)
         plt.title("Euclidean barycenter")
-        barycenter = euclidean_barycenter(X)
+        barycenter = euclidean_barycenter(corresponding_bird_data)
 
         # plot all points of the data set
-        for series in X:
-            plt.plot(series.to_numpy().ravel(), "k-", alpha=.2)
+        for series in corresponding_bird_data:
+            plt.plot(series.to_numpy().ravel(), "k-", alpha=0.2)
+
         # plot the given barycenter of them
         plt.plot(barycenter.ravel(), "r-", linewidth=2)
 
         ax1.set_xlim([0, 91])
 
         # show the plot(s)
-        plt.tight_layout()
+        # plt.tight_layout()
         plt.show()
-
-
-
-
-    # fig, bareAxs = plt.subplots(plot_count, plot_count, figsize=(10,10))
-    # axs = cast(NDArray[Any], bareAxs)
-    # fig.suptitle("Clusters")
-
-    # row_i = 0
-    # column_j = 0
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # # for each possible cluster label
-    # for current_cluster_label in set(cluster_labels):
-    #     clustered_graphs: list[pd.DataFrame] = []
-    #     ax = axs[row_i, column_j]
-
-    #     # for each index in the set of numbers from 1 to the last cluster label
-    #     for i in range(len(cluster_labels)):
-    #         cluster_label_in_range = cluster_labels[i]
-    #         if cluster_label_in_range == current_cluster_label:
-    #             ax.plot(all_bird_series[i], c="gray", alpha=0.4)
-
-    #             clustered_graphs.append(all_bird_series[i])
-
-    #     column_j += 1
-
-    #     if column_j % plot_count == 0:
-    #         row_i += 1
-    #         column_j = 0
-
-    # plt.tight_layout()
-    # plt.show()
 
 
 def render_cluster_counts(cluster_count: int, labels: list[int]) -> None:

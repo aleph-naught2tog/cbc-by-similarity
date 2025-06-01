@@ -2,7 +2,6 @@ import math
 import pandas as pd
 import os
 import warnings
-import matplotlib.pyplot as plt
 
 from plotters import render_bird_graphs, render_cluster_counts, render_clusters, render_elbows
 from transform_helpers import json_to_dataframes
