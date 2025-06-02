@@ -45,15 +45,16 @@ def render_elbows(
     all_bird_series: list[pd.DataFrame],
     **kwargs: Unpack[__DefRenderElbowsKwargs],
 ) -> None:
-    max_cluster_count = kwargs["max_cluster_count"]
-    metric = kwargs.get("metric", None)
-    metric_kwargs = {"metric": metric} if metric else {}
     """Calculates the elbows for our kmeans and renders them
 
     Args:
         all_bird_series (list[pd.DataFrame]):
             A list of DataFrame objects containing time series information
     """
+
+    max_cluster_count = kwargs["max_cluster_count"]
+    metric = kwargs.get("metric", None)
+    metric_kwargs = {"metric": metric} if metric else {}
 
     (inertias, cluster_counts) = compute_inertias(
         all_bird_series,

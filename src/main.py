@@ -10,7 +10,7 @@ from plotters import (
     render_clusters_with_barycenters,
     render_elbows,
 )
-from transform_helpers import json_to_dataframes
+from transform_helpers import bar_chart_to_dataframes, cbc_json_to_dataframes
 from tslearn.clustering import TimeSeriesKMeans
 
 
@@ -64,16 +64,18 @@ def get_filename(relative_filename: str) -> str:
 
     return f"{cwd_folder}/{filename_without_slash}"
 
-
 def main() -> None:
-    input_filename = get_filename("/data/raw/bird_map_as_json.json")
+    input_filename = get_filename("/data/raw/hotspot/ebird_L199454__1980_2025_1_12_barchart.txt")
+    bar_chart_to_dataframes(input_filename)
 
-    (all_bird_series, bird_names) = json_to_dataframes(input_filename)
+    # input_filename = get_filename("/data/raw/cbc/bird_map_as_json.json")
 
-    timeserieskmeans_over_dataframes(
-        all_bird_series=all_bird_series,
-        dataframe_titles=bird_names,
-    )
+    # (all_bird_series, bird_names) = cbc_json_to_dataframes(input_filename)
+
+    # timeserieskmeans_over_dataframes(
+    #     all_bird_series=all_bird_series,
+    #     dataframe_titles=bird_names,
+    # )
 
 
 if __name__ == "__main__":
