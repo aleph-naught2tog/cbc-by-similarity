@@ -66,16 +66,16 @@ def get_filename(relative_filename: str) -> str:
 
 def main() -> None:
     input_filename = get_filename("/data/raw/hotspot/ebird_L199454__1980_2025_1_12_barchart.txt")
-    bar_chart_to_dataframes(input_filename)
+    (all_bird_series, bird_names) = bar_chart_to_dataframes(input_filename)
 
     # input_filename = get_filename("/data/raw/cbc/bird_map_as_json.json")
 
     # (all_bird_series, bird_names) = cbc_json_to_dataframes(input_filename)
 
-    # timeserieskmeans_over_dataframes(
-    #     all_bird_series=all_bird_series,
-    #     dataframe_titles=bird_names,
-    # )
+    timeserieskmeans_over_dataframes(
+        all_bird_series=all_bird_series,
+        dataframe_titles=bird_names,
+    )
 
 
 if __name__ == "__main__":

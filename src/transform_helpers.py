@@ -46,6 +46,11 @@ def cbc_json_to_dataframes(
 
 
 def bar_chart_to_dataframes(csv_filename: str):
+    all_bird_series: list[pd.DataFrame] =[]
+    bird_names: list[str] = []
+
+    headers: list[str] = []
+
     # if I'm parsing this row by row, is a CSV reader the right choice?
     with open(csv_filename, newline="") as c:
         reader = csv.reader(c, delimiter="\t", skipinitialspace=True)
@@ -71,7 +76,6 @@ def bar_chart_to_dataframes(csv_filename: str):
             if index == 13:
                 # header row!
                 headers = row
-                headers[0] = "Bird name"
 
                 # this fills in the trailing december values
                 headers += ["", "", ""]
@@ -100,4 +104,25 @@ def bar_chart_to_dataframes(csv_filename: str):
                 # empty row
                 continue
 
-            print(row)
+            if len(row) == 0:
+                break;
+
+            bird_name = row[0]
+            values = row[1:]
+
+            bird_dict = {
+                "x_header_indices": [index for index, _ in enumerate(headers)],
+                "y_abundance": [float(v) for v in values]
+            }
+
+            print(bird_dict['x_header_indices'])
+            print(bird_dict['y_abundance'])
+
+            bird_df = pd.DataFrame(bird_dict)
+            bird_df.loc[:, ["x_header_indices", "y_abundance"]]
+            bird_df.set_index("x_header_indices", inplace=True)
+
+            all_bird_series.append(bird_df)
+            bird_names.append(bird_name)
+
+    return (all_bird_series, bird_names)
