@@ -112,6 +112,7 @@ def render_bird_graphs(
 def render_clusters_with_barycenters(
     cluster_labels: list[int],
     all_bird_series: list[pd.DataFrame],
+    metric = euclidean_barycenter
 ) -> None:
     """Given the dataset, loop over it and render each graph within its cluster
 
@@ -135,7 +136,7 @@ def render_clusters_with_barycenters(
 
         ax1 = plt.subplot(4, 1, 1)
         plt.title("Euclidean barycenter")
-        barycenter = euclidean_barycenter(corresponding_bird_data)
+        barycenter = metric(corresponding_bird_data)
 
         # plot all points of the data set
         for series in corresponding_bird_data:
@@ -144,7 +145,7 @@ def render_clusters_with_barycenters(
         # plot the given barycenter of them
         plt.plot(barycenter.ravel(), "r-", linewidth=2)
 
-        ax1.set_xlim([0, 91])
+        ax1.set_xlim([0, all_bird_series[0].size])
 
         # show the plot(s)
         # plt.tight_layout()

@@ -1,7 +1,10 @@
 import math
+from matplotlib import pyplot as plt
 import pandas as pd
 import os
 import warnings
+
+from sklearn.metrics import silhouette_score
 
 from app_types import HowT
 from plotters import (
@@ -12,6 +15,8 @@ from plotters import (
 )
 from transform_helpers import bar_chart_to_dataframes, cbc_json_to_dataframes
 from tslearn.clustering import TimeSeriesKMeans
+from tslearn.preprocessing import TimeSeriesScalerMeanVariance, \
+    TimeSeriesResampler
 
 
 # this silences all the sklearn future warnings
@@ -33,14 +38,38 @@ def timeserieskmeans_over_dataframes(
     tskmeans = TimeSeriesKMeans(n_clusters=final_cluster_count, metric="dtw")
     cluster_labels: list[int] = tskmeans.fit_predict(all_bird_series)  # type: ignore because it wants a different shape, but this works
 
-    ## graph clusters
-    render_clusters_with_barycenters(
-        cluster_labels=cluster_labels,
-        all_bird_series=all_bird_series,
-    )
+    render_silhouette_scores(all_bird_series)
 
-    render_cluster_counts(final_cluster_count, cluster_labels)
+    # ## graph clusters
+    # render_clusters_with_barycenters(
+    #     cluster_labels=cluster_labels,
+    #     all_bird_series=all_bird_series,
+    # )
 
+    # render_cluster_counts(final_cluster_count, cluster_labels)
+
+def render_silhouette_scores(all_bird_series: list[pd.DataFrame]):
+    for d in all_bird_series:
+        print(d.size)
+        continue
+        X_train = TimeSeriesScalerMeanVariance().fit_transform(d)
+
+        cluster_range = range(2, 50)
+
+        # Fit models and calculate silhouette scores for each number of clusters
+        silhouette_scores = []
+        for n_clusters in cluster_range:
+            model = TimeSeriesKMeans(n_clusters=n_clusters, metric="dtw")
+            y_pred = model.fit_predict(X_train)
+            silhouette = silhouette_score(X_train, y_pred)
+            silhouette_scores.append(silhouette)
+        # Plot the elbow curve
+        plt.figure(figsize=(8, 6))
+        plt.plot(cluster_range, silhouette_scores, marker='o', linestyle='-', color='b')
+        plt.title('Elbow Method for Optimal Number of Clusters')
+        plt.xlabel('Number of Clusters')
+        plt.ylabel('Silhouette Score')
+        plt.show()
 
 def write_dataframes_and_cluster_index_to_file(
     dataframe_titles: list[str], labels: list[int], how: HowT
