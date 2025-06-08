@@ -115,8 +115,8 @@ def bar_chart_to_dataframes(csv_filename: str):
                 "y_abundance": [float(v) for v in values]
             }
 
-            print(bird_dict['x_header_indices'])
-            print(bird_dict['y_abundance'])
+            # print(bird_dict['x_header_indices'])
+            # print(bird_dict['y_abundance'])
 
             bird_df = pd.DataFrame(bird_dict)
             bird_df.loc[:, ["x_header_indices", "y_abundance"]]
