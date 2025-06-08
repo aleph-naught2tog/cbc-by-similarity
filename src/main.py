@@ -86,6 +86,8 @@ def main() -> None:
     )
     (all_bird_series, bird_names) = bar_chart_to_dataframes(input_filename)
 
+
+
     # input_filename = get_filename("/data/raw/cbc/bird_map_as_json.json")
 
     # (all_bird_series, bird_names) = cbc_json_to_dataframes(input_filename)
