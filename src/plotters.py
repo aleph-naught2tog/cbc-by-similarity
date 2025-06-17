@@ -139,7 +139,17 @@ def render_clusters_with_barycenters(
 
         ax1 = plt.subplot(4, 1, 1)
         plt.title("Euclidean barycenter")
+
+        # can I get 2 dimensional data
+        # plot the 2 dimensional data
+        # a bunch of n-dimensional data points
+        # can this be investigative (I found something cool)
+        # a cool way of generating a new taxonomy of birds based on yearly observations -- how does this differ from ebird?
+        # eg: q: migratory thrushes -- how do they compare to non-migratory thrushes?
+        # "backyard birds"
+        # NEXT STEPS -- get a labeled 2 dimensional map of the clustering -- to get into reasonable clusters
         barycenter = metric(corresponding_bird_data)
+        print(barycenter)
 
         # plot all points of the data set
         for series in corresponding_bird_data:

@@ -21,6 +21,14 @@ from tslearn.clustering import TimeSeriesKMeans
 from tslearn.preprocessing import TimeSeriesScalerMeanVariance
 from itertools import product
 
+# use cosine similarities in a force-directed layout -- consider everything you're trying to cluster as a thing in space, tension the springs -> cos distance to spring tension -- need to add repulsion so they don't just get a squish (general state is to dislike, only attract when there is similarity) -- whole set of birds or subset (e.g. warblers) -- compare to other locales
+# write small sampling -- give me half, etc (e.g. 100 birds)
+
+# gradient between connection, non-connection
+# http://getspringy.com/
+# https://editor.p5js.org/JeromePaddick/sketches/bjA_UOPip
+# https://quasimondo.com/2016/02/25/raster-fairy-2016/
+
 
 # this silences all the sklearn future warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
